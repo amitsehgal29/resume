@@ -1,0 +1,418 @@
+/* ==========================================================================
+   Components — Cards, Buttons, Pipeline Nodes, Stat Cards
+   ========================================================================== */
+
+/* ── Experience Card ────────────────────────────────────────────── */
+.exp-card {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: var(--space-xl);
+  padding: var(--space-xl);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  min-height: 180px;
+  transition: box-shadow var(--duration-normal) var(--ease-smooth),
+              border-color var(--duration-normal) var(--ease-smooth);
+  position: relative;
+  overflow: hidden;
+}
+
+.exp-card::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--color-border);
+  border-radius: 0 var(--radius-full) var(--radius-full) 0;
+  transition: background var(--duration-normal) var(--ease-smooth);
+}
+
+.exp-card:hover {
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.exp-card:hover::before {
+  background: var(--color-brand);
+}
+
+.exp-card__meta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.exp-card__company {
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-body);
+  color: var(--color-text-primary);
+}
+
+.exp-card__role {
+  font-size: var(--text-body-sm);
+  color: var(--color-text-secondary);
+  font-weight: var(--weight-medium);
+}
+
+.exp-card__date {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--color-text-tertiary);
+  margin-top: auto;
+}
+
+.exp-card__client {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  color: var(--color-info);
+  background: var(--color-info-muted);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+  display: inline-block;
+  width: fit-content;
+}
+
+.exp-card__details {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.exp-card__achievement {
+  font-size: var(--text-body-sm);
+  color: var(--color-text-secondary);
+  line-height: var(--leading-relaxed);
+  padding-left: var(--space-md);
+  position: relative;
+}
+
+.exp-card__achievement::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.6em;
+  width: 5px;
+  height: 5px;
+  border-radius: var(--radius-full);
+  background: var(--color-border-strong);
+  transition: background var(--duration-normal) var(--ease-smooth);
+}
+
+.exp-card:hover .exp-card__achievement::before {
+  background: var(--color-brand);
+}
+
+.exp-card__tech-stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-xs);
+  margin-top: var(--space-sm);
+}
+
+/* ── Stat Card ──────────────────────────────────────────────────── */
+.stat-card {
+  text-align: center;
+  padding: var(--space-xl);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition: all var(--duration-normal) var(--ease-smooth);
+}
+
+.stat-card:hover {
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.stat-card__value {
+  font-family: var(--font-display);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: var(--weight-bold);
+  color: var(--color-brand);
+  line-height: 1;
+}
+
+.stat-card__label {
+  font-size: var(--text-body-sm);
+  color: var(--color-text-secondary);
+  margin-top: var(--space-sm);
+}
+
+.stat-card__unit {
+  font-size: var(--text-body);
+  font-weight: var(--weight-medium);
+  color: var(--color-text-tertiary);
+}
+
+/* ── Pipeline Node (SVG companions) ─────────────────────────────── */
+.pipeline-node {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--color-border);
+  background: var(--color-surface);
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-tertiary);
+  transition: all var(--duration-normal) var(--ease-smooth);
+  position: relative;
+}
+
+.pipeline-node--bronze {
+  border-radius: 20% 80% 20% 80% / 80% 20% 80% 20%;
+}
+
+.pipeline-node--silver {
+  border-radius: var(--radius-sm);
+  transform: rotate(45deg);
+}
+
+.pipeline-node--silver .pipeline-node__inner {
+  transform: rotate(-45deg);
+}
+
+.pipeline-node--gold {
+  border-radius: var(--radius-full);
+}
+
+.pipeline-node--active {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+  box-shadow: var(--shadow-glow);
+  background: var(--color-brand-muted);
+}
+
+/* ── Buttons ────────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-sm);
+  padding: 14px 28px;
+  font-family: var(--font-body);
+  font-size: var(--text-body);
+  font-weight: var(--weight-semibold);
+  border-radius: var(--radius-md);
+  transition: all var(--duration-normal) var(--ease-smooth);
+  position: relative;
+  white-space: nowrap;
+}
+
+.btn--primary {
+  background: var(--color-brand);
+  color: var(--color-text-inverse);
+  box-shadow: 0 2px 8px rgba(255, 54, 33, 0.25);
+}
+
+.btn--primary:hover {
+  background: var(--color-brand-hover);
+  box-shadow: 0 4px 16px rgba(255, 54, 33, 0.35);
+  transform: translateY(-1px);
+}
+
+.btn--primary:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 4px rgba(255, 54, 33, 0.2);
+}
+
+.btn--outline {
+  background: transparent;
+  color: var(--color-text-primary);
+  border: 1.5px solid var(--color-border-strong);
+}
+
+.btn--outline:hover {
+  border-color: var(--color-brand);
+  color: var(--color-brand);
+  background: var(--color-brand-muted);
+}
+
+.btn--lg {
+  padding: 18px 36px;
+  font-size: var(--text-body-lg);
+  border-radius: var(--radius-lg);
+}
+
+/* ── Magnetic Button ────────────────────────────────────────────── */
+.magnetic-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 40px;
+  font-family: var(--font-body);
+  font-size: var(--text-body-lg);
+  font-weight: var(--weight-semibold);
+  color: var(--color-text-inverse);
+  background: var(--color-brand);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  position: relative;
+  will-change: transform;
+  box-shadow: 0 4px 20px rgba(255, 54, 33, 0.3);
+  transition: box-shadow var(--duration-normal) var(--ease-smooth);
+}
+
+.magnetic-btn:hover {
+  box-shadow: 0 8px 32px rgba(255, 54, 33, 0.45);
+}
+
+.magnetic-btn__text {
+  display: inline-block;
+  will-change: transform;
+  position: relative;
+  z-index: 1;
+}
+
+.magnetic-btn__arrow {
+  display: inline-block;
+  margin-left: var(--space-sm);
+  transition: transform var(--duration-normal) var(--ease-smooth);
+}
+
+.magnetic-btn:hover .magnetic-btn__arrow {
+  transform: translateX(4px);
+}
+
+/* ── Project Card ───────────────────────────────────────────────── */
+.project-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  transition: all var(--duration-normal) var(--ease-smooth);
+  cursor: pointer;
+}
+
+.project-card:hover {
+  border-color: var(--color-border-strong);
+  box-shadow: var(--shadow-lg);
+  transform: translateY(-4px);
+}
+
+.project-card__preview {
+  aspect-ratio: 16 / 10;
+  background: var(--color-surface-alt);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.project-card__preview-icon {
+  font-size: 3rem;
+  opacity: 0.3;
+}
+
+.project-card__body {
+  padding: var(--space-lg);
+}
+
+.project-card__title {
+  font-weight: var(--weight-semibold);
+  margin-bottom: var(--space-sm);
+}
+
+.project-card__desc {
+  font-size: var(--text-body-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-md);
+}
+
+/* ── Project Expand Overlay ─────────────────────────────────────── */
+.project-expand {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.project-expand__bg {
+  position: absolute;
+  inset: 0;
+  background: var(--color-surface-alt);
+  border-radius: var(--radius-lg);
+  will-change: transform, border-radius;
+  transform-origin: center center;
+}
+
+.project-expand__overlay {
+  position: absolute;
+  inset: 0;
+  background: var(--color-overlay);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--space-2xl);
+  text-align: center;
+  opacity: 0;
+  transition: opacity var(--duration-expand) var(--ease-expand);
+}
+
+.project-expand__overlay--visible {
+  opacity: 1;
+}
+
+.project-expand__title {
+  font-size: var(--text-h2);
+  color: var(--color-text-inverse);
+  margin-bottom: var(--space-md);
+}
+
+.project-expand__desc {
+  font-size: var(--text-body-lg);
+  color: rgba(255, 255, 255, 0.75);
+  max-width: 600px;
+  margin-bottom: var(--space-xl);
+  line-height: var(--leading-relaxed);
+}
+
+.project-expand__stack {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+  justify-content: center;
+}
+
+.project-expand__stack .tag {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* ── Mobile Nav ─────────────────────────────────────────────────── */
+@media (max-width: 768px) {
+  .exp-card {
+    grid-template-columns: 1fr;
+    gap: var(--space-md);
+    padding: var(--space-lg);
+    min-height: auto;
+  }
+
+  .exp-card__meta {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: var(--space-sm) var(--space-md);
+  }
+
+  .exp-card__date {
+    margin-top: 0;
+  }
+
+  .magnetic-btn {
+    padding: 16px 32px;
+    font-size: var(--text-body);
+  }
+}

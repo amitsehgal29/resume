@@ -1,0 +1,122 @@
+/* ==========================================================================
+   Animations — Keyframes, Reduced Motion Fallbacks
+   ========================================================================== */
+
+/* ── Card Reveal States ─────────────────────────────────────────── */
+.card-reveal {
+  opacity: 0;
+  transform: translateY(40px) scale(0.98);
+  will-change: transform, opacity;
+}
+
+.card-reveal--visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  transition: transform var(--duration-reveal) var(--ease-reveal),
+              opacity 500ms ease;
+}
+
+.card-reveal--complete {
+  will-change: auto;
+}
+
+/* ── Stagger Delays ─────────────────────────────────────────────── */
+.card-reveal--delay-1 { transition-delay: 0ms; }
+.card-reveal--delay-2 { transition-delay: 100ms; }
+.card-reveal--delay-3 { transition-delay: 200ms; }
+.card-reveal--delay-4 { transition-delay: 300ms; }
+
+/* ── Fade In ────────────────────────────────────────────────────── */
+.fade-in {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 500ms ease, transform 500ms var(--ease-reveal);
+}
+
+.fade-in--visible {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* ── Pipeline Flow Animation ────────────────────────────────────── */
+.pipeline-flow-dot {
+  animation: flow-along-path 3s linear infinite;
+}
+
+.pipeline-flow-dot--slow {
+  animation-duration: 4.5s;
+}
+
+.pipeline-flow-dot--fast {
+  animation-duration: 2s;
+}
+
+@keyframes flow-along-path {
+  0% { offset-distance: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { offset-distance: 100%; opacity: 0; }
+}
+
+/* ── Node Pulse ─────────────────────────────────────────────────── */
+.node-pulse {
+  animation: node-soft-pulse 3s ease-in-out infinite;
+}
+
+@keyframes node-soft-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 var(--color-brand-glow); }
+  50% { box-shadow: 0 0 0 8px transparent; }
+}
+
+/* ── Counting Animation Support ─────────────────────────────────── */
+.count-up {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Pipeline Node Shape Active State (SVG) ────────────────────── */
+.pipeline-node-shape {
+  transition: all 400ms var(--ease-smooth);
+}
+
+.pipeline-node-shape--active {
+  stroke: var(--color-brand) !important;
+  stroke-width: 2.5 !important;
+  filter: drop-shadow(0 0 6px var(--color-brand-glow));
+}
+
+/* ── Reduced Motion ─────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  .card-reveal {
+    opacity: 1;
+    transform: none;
+    will-change: auto;
+  }
+
+  .card-reveal--visible {
+    transition: none;
+  }
+
+  .fade-in {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+
+  .pipeline-flow-dot,
+  .pipeline-flow-dot--slow,
+  .pipeline-flow-dot--fast {
+    animation: none;
+  }
+
+  .node-pulse {
+    animation: none;
+  }
+
+  .hero__scroll-hint {
+    animation: none;
+  }
+
+  .footer__pipeline-dot {
+    animation: none;
+  }
+}
