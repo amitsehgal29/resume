@@ -36,7 +36,7 @@ class PipelineEngine {
       // ═══════════ SOURCE ═══════════
       {
         id: 'source', label: 'Raw Profile Data', type: 'source', shortLabel: 'SOURCE',
-        x: 50, y: 300, w: 150, h: 44,
+        x: 40, y: 340, w: 155, h: 46,
         icon: '📥', layer: 'source', sparkJob: 'ingest_profile_data',
         connectsTo: ['bronze-layer'],
         detail: {
@@ -67,7 +67,7 @@ class PipelineEngine {
       // ═══════════ BRONZE LAYER ═══════════
       {
         id: 'bronze-layer', label: 'Bronze — Raw Ingestion', type: 'layer', shortLabel: 'BRONZE LAYER',
-        x: 280, y: 70, w: 260, h: 36,
+        x: 280, y: 70, w: 250, h: 38,
         icon: '🟤', layer: 'bronze', sparkJob: 'bronze_ingestion_job',
         status: 'pending',
         connectsTo: ['silver-layer', 'emirates', 'epam', 'abb', 'infosys'],
@@ -88,7 +88,7 @@ class PipelineEngine {
       },
       {
         id: 'emirates', label: 'Emirates NBD', type: 'activity', shortLabel: 'DE Consultant',
-        x: 250, y: 150, w: 155, h: 48,
+        x: 240, y: 140, w: 170, h: 52,
         icon: '🏦', layer: 'bronze', sparkJob: 'bronze_emirates_nbd',
         status: 'pending', connectsTo: [],
         detail: {
@@ -118,7 +118,7 @@ class PipelineEngine {
       },
       {
         id: 'epam', label: 'EPAM Systems', type: 'activity', shortLabel: 'Sr Data Engineer',
-        x: 250, y: 230, w: 155, h: 48,
+        x: 240, y: 220, w: 170, h: 52,
         icon: '🏢', layer: 'bronze', sparkJob: 'bronze_epam_cantire',
         status: 'pending', connectsTo: [],
         detail: {
@@ -145,7 +145,7 @@ class PipelineEngine {
       },
       {
         id: 'abb', label: 'ABB Global', type: 'activity', shortLabel: 'R&D Engineer',
-        x: 250, y: 310, w: 155, h: 48,
+        x: 240, y: 300, w: 170, h: 52,
         icon: '⚡', layer: 'bronze', sparkJob: 'bronze_abb_iot',
         status: 'pending', connectsTo: [],
         detail: {
@@ -175,7 +175,7 @@ class PipelineEngine {
       },
       {
         id: 'infosys', label: 'Infosys', type: 'activity', shortLabel: 'Data Engineer',
-        x: 250, y: 390, w: 155, h: 48,
+        x: 240, y: 380, w: 170, h: 52,
         icon: '💻', layer: 'bronze', sparkJob: 'bronze_infosys_pwc',
         status: 'pending', connectsTo: [],
         detail: {
@@ -207,7 +207,7 @@ class PipelineEngine {
       // ═══════════ SILVER LAYER ═══════════
       {
         id: 'silver-layer', label: 'Silver — Validated & Clean', type: 'layer', shortLabel: 'SILVER LAYER',
-        x: 580, y: 70, w: 240, h: 36,
+        x: 610, y: 70, w: 230, h: 38,
         icon: '⚪', layer: 'silver', sparkJob: 'silver_validation_job',
         status: 'pending',
         connectsTo: ['gold-layer', 'skills-node', 'certs-node', 'edu-node'],
@@ -228,7 +228,7 @@ class PipelineEngine {
       },
       {
         id: 'skills-node', label: 'Technical Skills', type: 'activity', shortLabel: '26 Technologies',
-        x: 560, y: 150, w: 155, h: 48,
+        x: 580, y: 140, w: 170, h: 52,
         icon: '🔧', layer: 'silver', sparkJob: 'silver_skills_catalog',
         status: 'pending', connectsTo: [],
         detail: {
@@ -246,7 +246,7 @@ class PipelineEngine {
       },
       {
         id: 'certs-node', label: 'Certifications', type: 'activity', shortLabel: '2 Azure Certs',
-        x: 560, y: 230, w: 155, h: 48,
+        x: 580, y: 220, w: 170, h: 52,
         icon: '📜', layer: 'silver', sparkJob: 'silver_certs_validate',
         status: 'pending', connectsTo: [],
         detail: {
@@ -262,7 +262,7 @@ class PipelineEngine {
       },
       {
         id: 'edu-node', label: 'Education', type: 'activity', shortLabel: 'B.E. Mumbai Univ',
-        x: 560, y: 310, w: 155, h: 48,
+        x: 580, y: 300, w: 170, h: 52,
         icon: '🎓', layer: 'silver', sparkJob: 'silver_edu_validate',
         status: 'pending', connectsTo: [],
         detail: {
@@ -279,7 +279,7 @@ class PipelineEngine {
       // ═══════════ GOLD LAYER ═══════════
       {
         id: 'gold-layer', label: 'Gold — Business Value', type: 'layer', shortLabel: 'GOLD LAYER',
-        x: 880, y: 70, w: 220, h: 36,
+        x: 940, y: 70, w: 210, h: 38,
         icon: '🟡', layer: 'gold', sparkJob: 'gold_aggregation_job',
         status: 'pending',
         connectsTo: ['sink', 'project-node', 'kpi-node'],
@@ -299,7 +299,7 @@ class PipelineEngine {
       },
       {
         id: 'project-node', label: 'Production Project', type: 'activity', shortLabel: 'Flask · 5K DAU',
-        x: 860, y: 150, w: 160, h: 48,
+        x: 910, y: 140, w: 175, h: 52,
         icon: '🚀', layer: 'gold', sparkJob: 'gold_project_vasai',
         status: 'pending', connectsTo: [],
         detail: {
@@ -325,7 +325,7 @@ class PipelineEngine {
       },
       {
         id: 'kpi-node', label: 'Performance KPIs', type: 'activity', shortLabel: '6 Key Metrics',
-        x: 860, y: 240, w: 160, h: 48,
+        x: 910, y: 225, w: 175, h: 52,
         icon: '📊', layer: 'gold', sparkJob: 'gold_kpi_dashboard',
         status: 'pending', connectsTo: [],
         detail: {
@@ -349,7 +349,7 @@ class PipelineEngine {
       // ═══════════ SINK ═══════════
       {
         id: 'sink', label: 'Export / Contact', type: 'sink', shortLabel: 'SINK',
-        x: 1160, y: 300, w: 120, h: 44,
+        x: 1210, y: 360, w: 135, h: 46,
         icon: '📤', layer: 'sink', sparkJob: 'sink_export_contact',
         connectsTo: [],
         detail: {
@@ -379,9 +379,9 @@ class PipelineEngine {
 
     // Layer bounding boxes
     this.layerBoxes = [
-      { id: 'bronze-box', label: 'BRONZE — Raw Data Lake', x: 220, y: 115, w: 210, h: 350, layer: 'bronze' },
-      { id: 'silver-box', label: 'SILVER — Validated & Clean', x: 540, y: 115, w: 200, h: 270, layer: 'silver' },
-      { id: 'gold-box', label: 'GOLD — Curated Insights', x: 840, y: 115, w: 205, h: 220, layer: 'gold' },
+      { id: 'bronze-box', label: 'BRONZE — Raw Data Lake', x: 220, y: 100, w: 210, h: 360, layer: 'bronze' },
+      { id: 'silver-box', label: 'SILVER — Validated & Clean', x: 560, y: 100, w: 210, h: 280, layer: 'silver' },
+      { id: 'gold-box', label: 'GOLD — Curated Insights', x: 890, y: 100, w: 215, h: 205, layer: 'gold' },
     ];
 
     if (this.nodeCount) this.nodeCount.textContent = this.nodes.length;

@@ -103,7 +103,7 @@ html, body {
 .pipeline-canvas::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: var(--radius-full); }
 
 .pipeline-canvas__inner {
-  position: relative; width: 1300px; height: 680px;
+  position: relative; width: 1450px; height: 800px;
   min-width: 100%; min-height: 100%;
 }
 
