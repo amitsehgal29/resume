@@ -100,7 +100,7 @@ class PipelineEngine {
         <span class="pipeline-node__status status--pending"></span>
       </div>
 
-      <span class="flow-arrow">→</span>
+      <!-- SVG line instead -->
 
       <!-- BRONZE ZONE -->
       <div class="pipeline-zone pipeline-zone--bronze" id="zone-bronze">
@@ -108,7 +108,7 @@ class PipelineEngine {
         <div class="pipeline-zone__nodes" id="zone-bronze-activities"></div>
       </div>
 
-      <span class="flow-arrow">→</span>
+      <!-- SVG line instead -->
 
       <!-- SILVER ZONE -->
       <div class="pipeline-zone pipeline-zone--silver" id="zone-silver">
@@ -116,7 +116,7 @@ class PipelineEngine {
         <div class="pipeline-zone__nodes" id="zone-silver-activities"></div>
       </div>
 
-      <span class="flow-arrow">→</span>
+      <!-- SVG line instead -->
 
       <!-- GOLD ZONE -->
       <div class="pipeline-zone pipeline-zone--gold" id="zone-gold">
@@ -124,7 +124,7 @@ class PipelineEngine {
         <div class="pipeline-zone__nodes" id="zone-gold-activities"></div>
       </div>
 
-      <span class="flow-arrow">→</span>
+      <!-- SVG line instead -->
 
       <!-- EXPORT -->
       <div class="pipeline-node pipeline-node--sink" id="node-sink" data-node="sink">
@@ -164,11 +164,62 @@ class PipelineEngine {
     });
   }
 
-  /* ── SVG Arrows ─────────────────────────────────────────────── */
+  /* ── SVG Connections ─────────────────────────────────────────── */
 
   drawArrows() {
-    // Only horizontal flow arrows (→) in HTML — no SVG lines needed
     this.svgLayer.innerHTML = '';
+    this.particles = [];
+    const cr = this.canvas.getBoundingClientRect();
+
+    const pairs = [
+      ['source', 'emirates'], ['emirates', 'skills'], ['skills', 'project'], ['project', 'sink'],
+      ['emirates', 'epam'], ['epam', 'abb'], ['abb', 'infosys'],
+      ['skills', 'certs'], ['certs', 'edu'],
+      ['project', 'kpi'],
+    ];
+
+    pairs.forEach(([from, to]) => {
+      const fe = this.nodeEls[from], te = this.nodeEls[to];
+      if (!fe || !te) return;
+      const fr = fe.getBoundingClientRect(), tr = te.getBoundingClientRect();
+      const x1 = fr.left + fr.width/2 - cr.left + this.canvas.scrollLeft;
+      const y1 = fr.top + fr.height/2 - cr.top + this.canvas.scrollTop;
+      const x2 = tr.left + tr.width/2 - cr.left + this.canvas.scrollLeft;
+      const y2 = tr.top + tr.height/2 - cr.top + this.canvas.scrollTop;
+      const dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy)||1;
+      const pad = 6;
+      const sx = x1 + (dx/len)*pad, sy = y1 + (dy/len)*pad;
+      const ex = x2 - (dx/len)*(pad+8), ey = y2 - (dy/len)*(pad+8);
+
+      const g = document.createElementNS('http://www.w3.org/2000/svg','g');
+      g.dataset.from=from; g.dataset.to=to; g.classList.add('pipeline-connection');
+      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',sx); line.setAttribute('y1',sy); line.setAttribute('x2',ex); line.setAttribute('y2',ey);
+      line.classList.add('pipeline-edge'); g.appendChild(line);
+      const angle=Math.atan2(ey-sy,ex-sx), asz=6;
+      const arrow=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+      arrow.setAttribute('points',`${ex},${ey} ${ex-asz*Math.cos(angle-0.5)},${ey-asz*Math.sin(angle-0.5)} ${ex-asz*Math.cos(angle+0.5)},${ey-asz*Math.sin(angle+0.5)}`);
+      arrow.classList.add('pipeline-arrow'); g.appendChild(arrow);
+      const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
+      dot.setAttribute('r','3'); dot.setAttribute('cx',sx); dot.setAttribute('cy',sy);
+      dot.classList.add('pipeline-particle'); g.appendChild(dot);
+      this.svgLayer.appendChild(g);
+      this.particles.push({el:dot, sx, sy, ex, ey, speed:0.003+Math.random()*0.003, progress:Math.random()});
+    });
+    this.animateParticles();
+  }
+
+  animateParticles() {
+    if (!this.particles.length) return;
+    const mult = this.isRunning ? 2 : 1;
+    this.particles.forEach(p => {
+      p.progress += p.speed * mult;
+      if (p.progress>1) p.progress-=1;
+      p.el.setAttribute('cx', p.sx+(p.ex-p.sx)*p.progress);
+      p.el.setAttribute('cy', p.sy+(p.ey-p.sy)*p.progress);
+      p.el.setAttribute('opacity', p.progress<0.08?p.progress/0.08:p.progress>0.92?(1-p.progress)/0.08:1);
+    });
+    requestAnimationFrame(()=>this.animateParticles());
   }
 
   /* ── Selection ───────────────────────────────────────────────── */
@@ -187,7 +238,9 @@ class PipelineEngine {
   }
 
   highlightConnections(id) {
-    // No-op: SVG lines removed, only HTML → arrows remain
+    this.svgLayer.querySelectorAll('.pipeline-connection').forEach(g => {
+      g.classList.toggle('pipeline-connection--active', id && (g.dataset.from===id || g.dataset.to===id));
+    });
   }
 
   closePanel() {
@@ -259,7 +312,18 @@ class PipelineEngine {
     document.getElementById('btn-close-panel').addEventListener('click',()=>this.closePanel());
     this.canvas.addEventListener('click',(e)=>{if(e.target===this.canvas)this.closePanel();});
     document.addEventListener('keydown',(e)=>{if(e.key==='Escape')this.closePanel();});
-    // SVG lines removed — no resize redraw needed
+    // Sidebar clicks
+    document.querySelectorAll('.sidebar__item').forEach(item => {
+      item.addEventListener('click', () => {
+        const nodeId = item.dataset.node;
+        if (nodeId) this.selectNode(nodeId);
+      });
+    });
+
+    // Redraw SVG on resize/scroll
+    new ResizeObserver(()=>this.drawArrows()).observe(this.canvas);
+    window.addEventListener('resize',()=>this.drawArrows());
+    this.canvas.addEventListener('scroll',()=>this.drawArrows());
   }
 }
 

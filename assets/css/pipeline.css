@@ -55,6 +55,13 @@ html, body {
 /* ── Main Area ─────────────────────────────────────────────────── */
 .main-area { flex: 1; display: flex; position: relative; overflow: hidden; min-height: 0; }
 
+/* ── Sidebar ───────────────────────────────────────────────────── */
+.sidebar { width: 150px; flex-shrink: 0; background: var(--color-surface); border-right: 1px solid var(--color-border); display: flex; flex-direction: column; padding: var(--space-sm); gap: 2px; z-index: 40; overflow-y: auto; }
+.sidebar__title { font-family: var(--font-mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-tertiary); padding: var(--space-sm) var(--space-sm) var(--space-xs); }
+.sidebar__item { display: flex; align-items: center; gap: var(--space-sm); padding: 7px 10px; border-radius: var(--radius-sm); font-size: var(--text-caption); font-weight: var(--weight-medium); color: var(--color-text-secondary); cursor: pointer; transition: all var(--duration-fast) var(--ease-smooth); border: 1px solid transparent; }
+.sidebar__item:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
+.sidebar__icon { font-size: 0.85rem; width: 20px; text-align: center; flex-shrink: 0; }
+
 /* ── Canvas ────────────────────────────────────────────────────── */
 .pipeline-canvas {
   flex: 1; position: relative; overflow: auto;
@@ -226,6 +233,9 @@ html, body {
 
 /* ── Responsive ────────────────────────────────────────────────── */
 @media (max-width: 900px) {
+  .sidebar { width: 44px; }
+  .sidebar__item span:not(.sidebar__icon) { display: none; }
+  .sidebar__title { display: none; }
   .detail-panel--open { width: 100%; position: absolute; right: 0; top: 0; bottom: 0; }
   .toolbar__pipeline-name, .cluster-bar__item:nth-child(n+3) { display: none; }
   .toolbar-btn span { display: none; }
