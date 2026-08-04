@@ -164,6 +164,17 @@ class PipelineEngine {
     });
   }
 
+  /* ── Helpers ─────────────────────────────────────────────────── */
+
+  // Find where a ray from (cx,cy) in direction (dx,dy) hits a rectangle of half-size (hw,hh)
+  edgePoint(cx, cy, hw, hh, dx, dy) {
+    if (Math.abs(dx) < 0.001 && Math.abs(dy) < 0.001) return { x: cx, y: cy };
+    const tx = dx !== 0 ? Math.abs(hw / dx) : Infinity;
+    const ty = dy !== 0 ? Math.abs(hh / dy) : Infinity;
+    const t = Math.min(tx, ty);
+    return { x: cx + dx * t, y: cy + dy * t };
+  }
+
   /* ── SVG Connections — Curved Bezier Lines ───────────────────── */
 
   drawArrows() {
@@ -198,20 +209,19 @@ class PipelineEngine {
       const fe = this.nodeEls[from], te = this.nodeEls[to];
       if (!fe || !te) return;
       const fr = fe.getBoundingClientRect(), tr = te.getBoundingClientRect();
-      let x1 = fr.left + fr.width/2 - cr.left + this.canvas.scrollLeft;
-      let y1 = fr.top + fr.height/2 - cr.top + this.canvas.scrollTop;
-      let x2 = tr.left + tr.width/2 - cr.left + this.canvas.scrollLeft;
-      let y2 = tr.top + tr.height/2 - cr.top + this.canvas.scrollTop;
+      const cx1 = fr.left + fr.width/2 - cr.left + this.canvas.scrollLeft;
+      const cy1 = fr.top + fr.height/2 - cr.top + this.canvas.scrollTop;
+      const cx2 = tr.left + tr.width/2 - cr.left + this.canvas.scrollLeft;
+      const cy2 = tr.top + tr.height/2 - cr.top + this.canvas.scrollTop;
 
-      // Pull start/end to node edges
-      const dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy)||1;
-      const pad = 8;
-      const sx = x1 + (dx/len)*pad, sy = y1 + (dy/len)*pad;
-      const ex = x2 - (dx/len)*(pad+6), ey = y2 - (dy/len)*(pad+6);
+      // Calculate edge intersection points based on actual node dimensions
+      const sx = this.edgePoint(cx1, cy1, fr.width/2 + 4, fr.height/2 + 4, cx2-cx1, cy2-cy1);
+      const ex = this.edgePoint(cx2, cy2, tr.width/2 + 4, tr.height/2 + 4, cx1-cx2, cy1-cy2);
 
       // Curved path — control point offset perpendicular at midpoint
-      const mx = (sx+ex)/2, my = (sy+ey)/2;
-      const perpX = -(ey-sy), perpY = (ex-sx);
+      const mx = (sx.x+ex.x)/2, my = (sx.y+ex.y)/2;
+      const pdx = ex.x - sx.x, pdy = ex.y - sx.y;
+      const perpX = -pdy, perpY = pdx;
       const plen = Math.sqrt(perpX*perpX+perpY*perpY)||1;
       const bow = style === 'flow' ? 25 : 15;
       const cpx = mx + (perpX/plen)*bow;
@@ -224,7 +234,7 @@ class PipelineEngine {
 
       // Curved line
       const path = document.createElementNS('http://www.w3.org/2000/svg','path');
-      path.setAttribute('d', `M${sx},${sy} Q${cpx},${cpy} ${ex},${ey}`);
+      path.setAttribute('d', `M${sx.x},${sx.y} Q${cpx},${cpy} ${ex.x},${ex.y}`);
       path.setAttribute('fill','none');
       path.setAttribute('stroke', col.stroke);
       path.setAttribute('stroke-width', style==='flow'?'2.5':'1.8');
@@ -234,10 +244,10 @@ class PipelineEngine {
       g.appendChild(path);
 
       // Arrow head at end
-      const angle = Math.atan2(ey-cpy, ex-cpx); // tangent at end of quadratic
+      const angle = Math.atan2(ex.y-cpy, ex.x-cpx);
       const asz = style==='flow'?7:5;
       const arrow = document.createElementNS('http://www.w3.org/2000/svg','polygon');
-      arrow.setAttribute('points',`${ex},${ey} ${ex-asz*Math.cos(angle-0.5)},${ey-asz*Math.sin(angle-0.5)} ${ex-asz*Math.cos(angle+0.5)},${ey-asz*Math.sin(angle+0.5)}`);
+      arrow.setAttribute('points',`${ex.x},${ex.y} ${ex.x-asz*Math.cos(angle-0.5)},${ex.y-asz*Math.sin(angle-0.5)} ${ex.x-asz*Math.cos(angle+0.5)},${ex.y-asz*Math.sin(angle+0.5)}`);
       arrow.setAttribute('fill', col.stroke);
       arrow.classList.add('pipeline-arrow');
       g.appendChild(arrow);
@@ -252,7 +262,7 @@ class PipelineEngine {
         dot.classList.add('pipeline-particle');
         g.appendChild(dot);
         this.particles.push({
-          el: dot, sx, sy, cpx, cpy, ex, ey,
+          el: dot, sx: sx.x, sy: sx.y, cpx, cpy, ex: ex.x, ey: ex.y,
           speed: 0.002 + Math.random()*0.003,
           progress: i/particleCount,
           origFill: col.stroke,
