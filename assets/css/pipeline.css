@@ -55,13 +55,6 @@ html, body {
 /* ── Main Area ─────────────────────────────────────────────────── */
 .main-area { flex: 1; display: flex; position: relative; overflow: hidden; min-height: 0; }
 
-/* ── Sidebar ───────────────────────────────────────────────────── */
-.sidebar { width: 160px; flex-shrink: 0; background: var(--color-surface); border-right: 1px solid var(--color-border); display: flex; flex-direction: column; padding: var(--space-sm); gap: 2px; z-index: 40; overflow-y: auto; }
-.sidebar__title { font-family: var(--font-mono); font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.08em; color: var(--color-text-tertiary); padding: var(--space-sm) var(--space-sm) var(--space-xs); }
-.sidebar__item { display: flex; align-items: center; gap: var(--space-sm); padding: 8px 10px; border-radius: var(--radius-sm); font-size: var(--text-caption); font-weight: var(--weight-medium); color: var(--color-text-secondary); cursor: pointer; transition: all var(--duration-fast) var(--ease-smooth); border: 1px solid transparent; }
-.sidebar__item:hover { background: var(--color-surface-hover); color: var(--color-text-primary); }
-.sidebar__icon { font-size: 0.9rem; width: 20px; text-align: center; flex-shrink: 0; }
-
 /* ── Canvas ────────────────────────────────────────────────────── */
 .pipeline-canvas {
   flex: 1; position: relative; overflow: auto;
@@ -78,19 +71,17 @@ html, body {
   pointer-events: none; z-index: 1;
 }
 
-/* ── Pipeline Layout (flexbox) ─────────────────────────────────── */
+/* ── Pipeline Layout ───────────────────────────────────────────── */
 .pipeline-layout {
-  display: flex; flex-direction: column;
-  padding: var(--space-lg); gap: var(--space-xl);
-  min-width: fit-content; min-height: 100%;
-  position: relative; z-index: 2;
+  display: flex; align-items: center; justify-content: center;
+  padding: var(--space-xl); min-height: 100%;
+  min-width: fit-content; position: relative; z-index: 2;
 }
 
 /* ── Main Flow Row ─────────────────────────────────────────────── */
 .pipeline-main-flow {
   display: flex; align-items: center; justify-content: center;
-  gap: var(--space-md); flex-wrap: wrap;
-  padding: var(--space-sm) 0;
+  gap: var(--space-md);
 }
 
 /* ── Pipeline Node (ADF activity card) ─────────────────────────── */
@@ -139,16 +130,12 @@ html, body {
 .pipeline-node__status.status--success { background: var(--color-success); box-shadow: 0 0 6px rgba(52,211,153,0.5); }
 .pipeline-node__delta { position: absolute; top: -6px; left: -6px; font-size: 0.55rem; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; background: var(--color-surface); border: 1.5px solid var(--color-node-gold); border-radius: var(--radius-full); color: var(--color-node-gold); }
 
-/* ── Zones Row ─────────────────────────────────────────────────── */
-.pipeline-zones {
-  display: flex; gap: var(--space-lg); justify-content: center;
-}
-
+/* ── Zones (Big Dotted Boxes) ──────────────────────────────────── */
 .pipeline-zone {
   border: 1.5px dashed var(--color-border-strong);
   border-radius: var(--radius-lg); padding: var(--space-md);
   background: var(--color-surface-alt);
-  flex: 1; max-width: 280px; min-width: 200px;
+  width: 240px; flex-shrink: 0;
   display: flex; flex-direction: column; gap: var(--space-sm);
 }
 .pipeline-zone--bronze { border-color: rgba(184,115,51,0.35); background: rgba(184,115,51,0.04); }
@@ -239,15 +226,11 @@ html, body {
 
 /* ── Responsive ────────────────────────────────────────────────── */
 @media (max-width: 900px) {
-  .sidebar { width: 44px; }
-  .sidebar__item span:not(.sidebar__icon) { display: none; }
-  .sidebar__title { display: none; }
   .detail-panel--open { width: 100%; position: absolute; right: 0; top: 0; bottom: 0; }
   .toolbar__pipeline-name, .cluster-bar__item:nth-child(n+3) { display: none; }
   .toolbar-btn span { display: none; }
-  .pipeline-zones { flex-direction: column; align-items: stretch; }
-  .pipeline-zone { max-width: none; }
-  .pipeline-main-flow { gap: var(--space-xs); }
+  .pipeline-main-flow { flex-wrap: wrap; }
+  .pipeline-zone { width: auto; min-width: 180px; }
   .flow-arrow { display: none; }
 }
 
@@ -255,5 +238,5 @@ html, body {
   .pipeline-node { padding: 8px 10px; gap: 6px; }
   .pipeline-node__label { font-size: 0.68rem; }
   .pipeline-node__sublabel { display: none; }
-  .pipeline-layout { padding: var(--space-sm); gap: var(--space-md); }
+  .pipeline-layout { padding: var(--space-sm); }
 }

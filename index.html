@@ -8,7 +8,6 @@
   <meta property="og:title" content="Amit Sehgal — Senior Data Engineer | Pipeline Resume">
   <meta property="og:description" content="Interactive ETL pipeline portfolio — click nodes to explore.">
   <meta property="og:url" content="https://amitsehgal29.github.io/resume/">
-  <meta name="twitter:card" content="summary_large_image">
   <title>Amit Sehgal — Pipeline Resume</title>
 
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -16,10 +15,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="assets/css/tokens.css">
   <link rel="stylesheet" href="assets/css/pipeline.css">
-
-  <script type="application/ld+json">
-  {"@context":"https://schema.org","@type":"Person","name":"Amit Sehgal","jobTitle":"Senior Data Engineer","email":"reachamitsehgal29@gmail.com","telephone":"+971-506889952","address":{"@type":"PostalAddress","addressLocality":"Dubai","addressCountry":"AE"},"url":"https://linkedin.com/in/sehgal-amit"}
-  </script>
 </head>
 <body>
 
@@ -32,8 +27,8 @@
     <div class="toolbar__spacer"></div>
     <span id="pipeline-status" class="status-badge status--ready">Ready</span>
     <button id="btn-run" class="toolbar-btn toolbar-btn--primary">▶ Run Pipeline</button>
-    <a href="Amit Sehgal Resume.pdf" download class="toolbar-btn">📄 Download</a>
     <a href="https://linkedin.com/in/sehgal-amit" target="_blank" rel="noopener noreferrer" class="toolbar-btn">🔗 LinkedIn</a>
+    <a href="Amit Sehgal Resume.pdf" download class="toolbar-btn">📄 Resume</a>
   </header>
 
   <!-- CLUSTER BAR -->
@@ -48,52 +43,13 @@
   <!-- MAIN AREA -->
   <div class="main-area">
 
-    <!-- SIDEBAR -->
-    <nav class="sidebar" aria-label="Pipeline navigation">
-      <div class="sidebar__title">Workspace</div>
-      <div class="sidebar__item" data-target-node="source"><span class="sidebar__icon">📥</span><span>Source</span></div>
-      <div class="sidebar__item" data-target-node="bronze-layer"><span class="sidebar__icon">🟤</span><span>Bronze</span></div>
-      <div class="sidebar__item" data-target-node="silver-layer"><span class="sidebar__icon">⚪</span><span>Silver</span></div>
-      <div class="sidebar__item" data-target-node="gold-layer"><span class="sidebar__icon">🟡</span><span>Gold</span></div>
-      <div class="sidebar__item" data-target-node="sink"><span class="sidebar__icon">📤</span><span>Export</span></div>
-      <div class="sidebar__title" style="margin-top:var(--space-md)">Jobs</div>
-      <div class="sidebar__item" data-target-node="emirates"><span class="sidebar__icon">🏦</span><span>emirates_nbd</span></div>
-      <div class="sidebar__item" data-target-node="epam"><span class="sidebar__icon">🏢</span><span>epam</span></div>
-      <div class="sidebar__item" data-target-node="abb"><span class="sidebar__icon">⚡</span><span>abb</span></div>
-      <div class="sidebar__item" data-target-node="infosys"><span class="sidebar__icon">💻</span><span>infosys</span></div>
-      <div class="sidebar__title" style="margin-top:var(--space-md)">Catalog</div>
-      <div class="sidebar__item" data-target-node="skills-node"><span class="sidebar__icon">🔧</span><span>skills</span></div>
-      <div class="sidebar__item" data-target-node="certs-node"><span class="sidebar__icon">📜</span><span>certifications</span></div>
-      <div class="sidebar__item" data-target-node="edu-node"><span class="sidebar__icon">🎓</span><span>education</span></div>
-      <div class="sidebar__title" style="margin-top:var(--space-md)">Metrics</div>
-      <div class="sidebar__item" data-target-node="project-node"><span class="sidebar__icon">🚀</span><span>project</span></div>
-      <div class="sidebar__item" data-target-node="kpi-node"><span class="sidebar__icon">📊</span><span>kpi</span></div>
-    </nav>
-
-    <!-- CANVAS WITH SVG OVERLAY -->
     <main id="pipeline-canvas" class="pipeline-canvas">
       <svg id="pipeline-svg" class="pipeline-svg-layer" xmlns="http://www.w3.org/2000/svg"></svg>
 
       <div class="pipeline-layout" id="pipeline-layout">
-        <!-- Top row: the main pipeline flow -->
+        <!-- Pipeline flow: Source → Bronze Box → Silver Box → Gold Box → Export -->
         <div class="pipeline-main-flow" id="pipeline-main-flow">
-          <!-- Nodes injected by JS -->
-        </div>
-
-        <!-- Bottom row: three layer zones side by side -->
-        <div class="pipeline-zones" id="pipeline-zones">
-          <div class="pipeline-zone pipeline-zone--bronze" id="zone-bronze">
-            <div class="pipeline-zone__label">BRONZE — Raw Data Lake</div>
-            <div class="pipeline-zone__nodes" id="zone-bronze-nodes"></div>
-          </div>
-          <div class="pipeline-zone pipeline-zone--silver" id="zone-silver">
-            <div class="pipeline-zone__label">SILVER — Validated & Clean</div>
-            <div class="pipeline-zone__nodes" id="zone-silver-nodes"></div>
-          </div>
-          <div class="pipeline-zone pipeline-zone--gold" id="zone-gold">
-            <div class="pipeline-zone__label">GOLD — Curated Insights</div>
-            <div class="pipeline-zone__nodes" id="zone-gold-nodes"></div>
-          </div>
+          <!-- source, bronze-box, silver-box, gold-box, sink injected by JS -->
         </div>
       </div>
     </main>
@@ -117,8 +73,7 @@
 
   <!-- STATUSBAR -->
   <footer class="statusbar">
-    <span class="statusbar__item">Nodes: <span id="node-count">0</span></span>
-    <span class="statusbar__item">Connections: <span id="connection-count">0</span></span>
+    <span class="statusbar__item">Pipeline: amit_resume_dag</span>
     <span class="statusbar__item">Bronze → Silver → Gold · Delta Lake medallion</span>
     <span class="statusbar__item" style="margin-left:auto">spark.sql.adaptive.enabled = true</span>
   </footer>
