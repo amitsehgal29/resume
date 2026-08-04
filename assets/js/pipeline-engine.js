@@ -223,7 +223,7 @@ class PipelineEngine {
       const pdx = ex.x - sx.x, pdy = ex.y - sx.y;
       const perpX = -pdy, perpY = pdx;
       const plen = Math.sqrt(perpX*perpX+perpY*perpY)||1;
-      const bow = style === 'flow' ? 25 : 15;
+      const bow = style === 'flow' ? 6 : 4;
       const cpx = mx + (perpX/plen)*bow;
       const cpy = my + (perpY/plen)*bow;
 
