@@ -105,10 +105,6 @@ class PipelineEngine {
       <!-- BRONZE ZONE -->
       <div class="pipeline-zone pipeline-zone--bronze" id="zone-bronze">
         <div class="pipeline-zone__label">BRONZE — Raw Data Lake</div>
-        <div class="pipeline-node pipeline-node--layer pipeline-node--bronze" id="node-bronze-layer" data-node="bronze">
-          <span class="pipeline-node__icon">🟤</span><span class="pipeline-node__text"><span class="pipeline-node__label">Bronze — Raw<br>Ingestion</span></span>
-          <span class="pipeline-node__delta">Δ</span><span class="pipeline-node__status status--pending"></span>
-        </div>
         <div class="pipeline-zone__nodes" id="zone-bronze-activities"></div>
       </div>
 
@@ -117,10 +113,6 @@ class PipelineEngine {
       <!-- SILVER ZONE -->
       <div class="pipeline-zone pipeline-zone--silver" id="zone-silver">
         <div class="pipeline-zone__label">SILVER — Validated & Clean</div>
-        <div class="pipeline-node pipeline-node--layer pipeline-node--silver" id="node-silver-layer" data-node="silver">
-          <span class="pipeline-node__icon">⚪</span><span class="pipeline-node__text"><span class="pipeline-node__label">Silver —<br>Validation</span></span>
-          <span class="pipeline-node__delta">Δ</span><span class="pipeline-node__status status--pending"></span>
-        </div>
         <div class="pipeline-zone__nodes" id="zone-silver-activities"></div>
       </div>
 
@@ -129,10 +121,6 @@ class PipelineEngine {
       <!-- GOLD ZONE -->
       <div class="pipeline-zone pipeline-zone--gold" id="zone-gold">
         <div class="pipeline-zone__label">GOLD — Curated Insights</div>
-        <div class="pipeline-node pipeline-node--layer pipeline-node--gold" id="node-gold-layer" data-node="gold">
-          <span class="pipeline-node__icon">🟡</span><span class="pipeline-node__text"><span class="pipeline-node__label">Gold — Business<br>Value</span></span>
-          <span class="pipeline-node__delta">Δ</span><span class="pipeline-node__status status--pending"></span>
-        </div>
         <div class="pipeline-zone__nodes" id="zone-gold-activities"></div>
       </div>
 
@@ -184,10 +172,10 @@ class PipelineEngine {
     const canvasRect = this.canvas.getBoundingClientRect();
 
     const pairs = [
-      ['source', 'bronze'], ['bronze', 'silver'], ['silver', 'gold'], ['gold', 'sink'],
-      ['bronze', 'emirates'], ['bronze', 'epam'], ['bronze', 'abb'], ['bronze', 'infosys'],
-      ['silver', 'skills'], ['silver', 'certs'], ['silver', 'edu'],
-      ['gold', 'project'], ['gold', 'kpi'],
+      ['source', 'emirates'], ['emirates', 'skills'], ['skills', 'project'], ['project', 'sink'],
+      ['emirates', 'epam'], ['epam', 'abb'], ['abb', 'infosys'],
+      ['skills', 'certs'], ['certs', 'edu'],
+      ['project', 'kpi'],
     ];
 
     pairs.forEach(([from, to]) => {
@@ -280,13 +268,13 @@ class PipelineEngine {
       if(i>=stages.length){out.innerHTML+='<span style="color:#34D399">✓ All jobs succeeded</span><br><span style="color:#A0A0AB">─────────────────</span><br><span style="color:#FBBF24">Total DBU: 0.42 · Rows: 59 · Duration: 6.8s</span><br><span style="color:#34D399">Status: SUCCESS ✓</span>';out.scrollTop=out.scrollHeight;setTimeout(()=>this.celebrateFinish(),800);return;}
       const s=stages[i]; out.innerHTML+=`<span style="color:#60A5FA">[${i+1}/${stages.length}]</span> ${s.n} — ${s.r} rows · ${s.t} · ${s.m}<br>`;out.scrollTop=out.scrollHeight;
       // Update node statuses
-      if(i===0) ['source','bronze'].forEach(id=>this.setStatus(id,'running'));
-      if(i>=1&&i<=4) this.setStatus(['emirates','epam','abb','infosys'][i-1],i===0?'running':'success');
-      if(i===5) this.setStatus('silver','running');
-      if(i===6) this.setStatus('skills',i===0?'running':'success');
+      if(i===0) this.setStatus('source','running');
+      if(i>=1&&i<=4) this.setStatus(['emirates','epam','abb','infosys'][i-1],'running');
+      if(i===5) ['emirates','epam','abb','infosys'].forEach(id=>this.setStatus(id,'success'));
+      if(i===6) this.setStatus('skills','running');
       if(i===7) {this.setStatus('skills','success');this.setStatus('certs','running');}
-      if(i===8) {this.setStatus('certs','success');this.setStatus('edu','success');this.setStatus('gold','running');}
-      if(i===9) {this.setStatus('gold','success');this.setStatus('sink','running');}
+      if(i===8) {this.setStatus('certs','success');this.setStatus('edu','success');}
+      if(i===9) {['skills','certs','edu'].forEach(id=>this.setStatus(id,'success'));this.setStatus('sink','running');}
       i++; setTimeout(append,350+Math.random()*200);
     };
     this.setStatus('source','running');
@@ -311,7 +299,7 @@ class PipelineEngine {
     this.nodes().forEach(id=>this.setStatus(id,'success'));
   }
 
-  nodes() { return ['source','bronze','silver','gold','sink','emirates','epam','abb','infosys','skills','certs','edu','project','kpi']; }
+  nodes() { return ['source','sink','emirates','epam','abb','infosys','skills','certs','edu','project','kpi']; }
 
   /* ── Init ────────────────────────────────────────────────────── */
 
