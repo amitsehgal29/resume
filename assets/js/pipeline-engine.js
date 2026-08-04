@@ -164,47 +164,100 @@ class PipelineEngine {
     });
   }
 
-  /* ── SVG Connections ─────────────────────────────────────────── */
+  /* ── SVG Connections — Curved Bezier Lines ───────────────────── */
 
   drawArrows() {
     this.svgLayer.innerHTML = '';
     this.particles = [];
     const cr = this.canvas.getBoundingClientRect();
 
+    // Connection definitions: [from, to, style]
+    // style: 'flow' (horizontal main), 'bronze', 'silver', 'gold'
     const pairs = [
-      ['source', 'emirates'], ['emirates', 'skills'], ['skills', 'project'], ['project', 'sink'],
-      ['emirates', 'epam'], ['epam', 'abb'], ['abb', 'infosys'],
-      ['skills', 'certs'], ['certs', 'edu'],
-      ['project', 'kpi'],
+      ['source', 'emirates', 'flow'],
+      ['emirates', 'skills', 'flow'],
+      ['skills', 'project', 'flow'],
+      ['project', 'sink', 'flow'],
+      ['emirates', 'epam', 'bronze'],
+      ['epam', 'abb', 'bronze'],
+      ['abb', 'infosys', 'bronze'],
+      ['skills', 'certs', 'silver'],
+      ['certs', 'edu', 'silver'],
+      ['project', 'kpi', 'gold'],
     ];
 
-    pairs.forEach(([from, to]) => {
+    const colors = {
+      flow:   { stroke: '#FF3621', glow: 'rgba(255,54,33,0.4)', dash: 'none' },
+      bronze: { stroke: '#B87333', glow: 'rgba(184,115,51,0.3)', dash: '6 3' },
+      silver: { stroke: '#8E8E93', glow: 'rgba(142,142,147,0.25)', dash: '4 4' },
+      gold:   { stroke: '#FBBF24', glow: 'rgba(251,191,36,0.35)', dash: 'none' },
+    };
+
+    pairs.forEach(([from, to, style]) => {
       const fe = this.nodeEls[from], te = this.nodeEls[to];
       if (!fe || !te) return;
       const fr = fe.getBoundingClientRect(), tr = te.getBoundingClientRect();
-      const x1 = fr.left + fr.width/2 - cr.left + this.canvas.scrollLeft;
-      const y1 = fr.top + fr.height/2 - cr.top + this.canvas.scrollTop;
-      const x2 = tr.left + tr.width/2 - cr.left + this.canvas.scrollLeft;
-      const y2 = tr.top + tr.height/2 - cr.top + this.canvas.scrollTop;
+      let x1 = fr.left + fr.width/2 - cr.left + this.canvas.scrollLeft;
+      let y1 = fr.top + fr.height/2 - cr.top + this.canvas.scrollTop;
+      let x2 = tr.left + tr.width/2 - cr.left + this.canvas.scrollLeft;
+      let y2 = tr.top + tr.height/2 - cr.top + this.canvas.scrollTop;
+
+      // Pull start/end to node edges
       const dx = x2-x1, dy = y2-y1, len = Math.sqrt(dx*dx+dy*dy)||1;
-      const pad = 6;
+      const pad = 8;
       const sx = x1 + (dx/len)*pad, sy = y1 + (dy/len)*pad;
-      const ex = x2 - (dx/len)*(pad+8), ey = y2 - (dy/len)*(pad+8);
+      const ex = x2 - (dx/len)*(pad+6), ey = y2 - (dy/len)*(pad+6);
+
+      // Curved path — control point offset perpendicular at midpoint
+      const mx = (sx+ex)/2, my = (sy+ey)/2;
+      const perpX = -(ey-sy), perpY = (ex-sx);
+      const plen = Math.sqrt(perpX*perpX+perpY*perpY)||1;
+      const bow = style === 'flow' ? 25 : 15;
+      const cpx = mx + (perpX/plen)*bow;
+      const cpy = my + (perpY/plen)*bow;
+
+      const col = colors[style];
 
       const g = document.createElementNS('http://www.w3.org/2000/svg','g');
       g.dataset.from=from; g.dataset.to=to; g.classList.add('pipeline-connection');
-      const line = document.createElementNS('http://www.w3.org/2000/svg','line');
-      line.setAttribute('x1',sx); line.setAttribute('y1',sy); line.setAttribute('x2',ex); line.setAttribute('y2',ey);
-      line.classList.add('pipeline-edge'); g.appendChild(line);
-      const angle=Math.atan2(ey-sy,ex-sx), asz=6;
-      const arrow=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+
+      // Curved line
+      const path = document.createElementNS('http://www.w3.org/2000/svg','path');
+      path.setAttribute('d', `M${sx},${sy} Q${cpx},${cpy} ${ex},${ey}`);
+      path.setAttribute('fill','none');
+      path.setAttribute('stroke', col.stroke);
+      path.setAttribute('stroke-width', style==='flow'?'2.5':'1.8');
+      path.setAttribute('stroke-dasharray', col.dash);
+      path.setAttribute('stroke-linecap','round');
+      path.classList.add('pipeline-edge');
+      g.appendChild(path);
+
+      // Arrow head at end
+      const angle = Math.atan2(ey-cpy, ex-cpx); // tangent at end of quadratic
+      const asz = style==='flow'?7:5;
+      const arrow = document.createElementNS('http://www.w3.org/2000/svg','polygon');
       arrow.setAttribute('points',`${ex},${ey} ${ex-asz*Math.cos(angle-0.5)},${ey-asz*Math.sin(angle-0.5)} ${ex-asz*Math.cos(angle+0.5)},${ey-asz*Math.sin(angle+0.5)}`);
-      arrow.classList.add('pipeline-arrow'); g.appendChild(arrow);
-      const dot=document.createElementNS('http://www.w3.org/2000/svg','circle');
-      dot.setAttribute('r','3'); dot.setAttribute('cx',sx); dot.setAttribute('cy',sy);
-      dot.classList.add('pipeline-particle'); g.appendChild(dot);
+      arrow.setAttribute('fill', col.stroke);
+      arrow.classList.add('pipeline-arrow');
+      g.appendChild(arrow);
+
+      // 2-3 particles per line at staggered positions
+      const particleCount = style==='flow'?3:2;
+      for (let i=0; i<particleCount; i++) {
+        const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
+        dot.setAttribute('r', style==='flow'?'3.5':'2.5');
+        dot.setAttribute('fill', col.stroke);
+        dot.setAttribute('filter', `drop-shadow(0 0 4px ${col.glow})`);
+        dot.classList.add('pipeline-particle');
+        g.appendChild(dot);
+        this.particles.push({
+          el: dot, sx, sy, cpx, cpy, ex, ey,
+          speed: 0.002 + Math.random()*0.003,
+          progress: i/particleCount,
+        });
+      }
+
       this.svgLayer.appendChild(g);
-      this.particles.push({el:dot, sx, sy, ex, ey, speed:0.003+Math.random()*0.003, progress:Math.random()});
     });
     this.animateParticles();
   }
@@ -215,9 +268,14 @@ class PipelineEngine {
     this.particles.forEach(p => {
       p.progress += p.speed * mult;
       if (p.progress>1) p.progress-=1;
-      p.el.setAttribute('cx', p.sx+(p.ex-p.sx)*p.progress);
-      p.el.setAttribute('cy', p.sy+(p.ey-p.sy)*p.progress);
-      p.el.setAttribute('opacity', p.progress<0.08?p.progress/0.08:p.progress>0.92?(1-p.progress)/0.08:1);
+      // Quadratic bezier: B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2
+      const t = p.progress, mt = 1-t;
+      const cx = mt*mt*p.sx + 2*mt*t*p.cpx + t*t*p.ex;
+      const cy = mt*mt*p.sy + 2*mt*t*p.cpy + t*t*p.ey;
+      p.el.setAttribute('cx', cx);
+      p.el.setAttribute('cy', cy);
+      const fade = t<0.08?t/0.08:t>0.92?(1-t)/0.08:1;
+      p.el.setAttribute('opacity', fade);
     });
     requestAnimationFrame(()=>this.animateParticles());
   }
