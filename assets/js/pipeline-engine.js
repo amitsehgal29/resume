@@ -253,7 +253,7 @@ class PipelineEngine {
       g.appendChild(arrow);
 
       // 2-3 particles per line at staggered positions
-      const particleCount = style==='flow'?3:2;
+      const particleCount = style==='flow'?2:1;
       for (let i=0; i<particleCount; i++) {
         const dot = document.createElementNS('http://www.w3.org/2000/svg','circle');
         dot.setAttribute('r', style==='flow'?'3.5':'2.5');
