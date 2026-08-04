@@ -41,25 +41,25 @@ class PipelineEngine {
       },
       {
         id: 'bronze-layer', label: 'Bronze\nIngestion', type: 'layer',
-        container: 'main-flow', icon: '🟤', layer: 'bronze',
+        container: 'pipeline-main-flow', icon: '🟤', layer: 'bronze',
         connectsTo: ['silver-layer', 'emirates', 'epam', 'abb', 'infosys'],
         detail: { title: 'Bronze Layer — Raw Data Lake', subtitle: 'Delta Table: delta_bronze.career_experience', sparkMeta: '4 versions · 4 companies · 9 years', content: this.bronzeLayerDetail() }
       },
       {
         id: 'silver-layer', label: 'Silver\nValidation', type: 'layer',
-        container: 'main-flow', icon: '⚪', layer: 'silver',
+        container: 'pipeline-main-flow', icon: '⚪', layer: 'silver',
         connectsTo: ['gold-layer', 'skills-node', 'certs-node', 'edu-node'],
         detail: { title: 'Silver Layer — Validated', subtitle: 'Delta Table: delta_silver.validated_skills', sparkMeta: 'Quality checks: 12/12 passed', content: this.silverLayerDetail() }
       },
       {
         id: 'gold-layer', label: 'Gold\nAggregation', type: 'layer',
-        container: 'main-flow', icon: '🟡', layer: 'gold',
+        container: 'pipeline-main-flow', icon: '🟡', layer: 'gold',
         connectsTo: ['sink', 'project-node', 'kpi-node'],
         detail: { title: 'Gold Layer — Business Value', subtitle: 'Delta Table: delta_gold.kpi_metrics', sparkMeta: 'OPTIMIZE + VACUUM applied', content: this.goldLayerDetail() }
       },
       {
         id: 'sink', label: 'Export\nContact', type: 'sink',
-        container: 'main-flow', icon: '📤', layer: 'sink',
+        container: 'pipeline-main-flow', icon: '📤', layer: 'sink',
         connectsTo: [],
         detail: { title: 'Let\'s Build Together', subtitle: 'Dubai, UAE · Open to Senior DE Roles', sparkMeta: 'Format: PDF / LinkedIn / Email', content: this.sinkDetail() }
       },
