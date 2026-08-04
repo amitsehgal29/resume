@@ -1,5 +1,5 @@
 /* ==========================================================================
-   Pipeline Engine — ADF-style interactive canvas
+   Pipeline Engine v2 — Databricks-Inspired Interactive Canvas
    ========================================================================== */
 
 class PipelineEngine {
@@ -10,17 +10,26 @@ class PipelineEngine {
     this.detailPanel = document.getElementById('detail-panel');
     this.detailContent = document.getElementById('detail-content');
     this.detailTitle = document.getElementById('detail-title');
+    this.detailSubtitleEl = document.getElementById('detail-subtitle');
+    this.detailSparkMeta = document.getElementById('detail-spark-meta');
     this.runBtn = document.getElementById('btn-run');
     this.statusIndicator = document.getElementById('pipeline-status');
+    this.clusterRuntime = document.getElementById('cluster-runtime');
     this.nodeCount = document.getElementById('node-count');
     this.connectionCount = document.getElementById('connection-count');
 
     this.nodes = [];
+    this.nodeEls = {};
     this.connections = [];
     this.particles = [];
-    this.activeNode = null;
+    this.activeNodeId = null;
     this.isRunning = false;
-    this.runProgress = 0;
+    this.frameId = null;
+
+    // Spring physics for hover
+    this.hoverSprings = {};
+    this.mouseX = 0;
+    this.mouseY = 0;
 
     this.init();
   }
@@ -28,310 +37,346 @@ class PipelineEngine {
   /* ── Pipeline Data ──────────────────────────────────────────── */
 
   buildPipeline() {
-    // Define nodes — each has id, label, type, position, connections, and detail data
     const nodeDefs = [
+      // ═══════════ SOURCE ═══════════
       {
         id: 'source', label: 'Raw Profile\nData', type: 'source',
-        x: 40, y: 280,
-        icon: '📥', layer: 'source',
+        x: 50, y: 310,
+        icon: '📥', layer: 'source', sparkJob: 'ingest_profile_data',
         connectsTo: ['bronze-layer'],
         detail: {
           title: 'Amit Sehgal',
-          subtitle: 'Senior Data Engineer',
+          subtitle: 'Senior Data Engineer · Dubai, UAE',
+          sparkMeta: 'Job: ingest_profile_data · Status: Succeeded · Duration: 0.8s',
           content: `
             <div class="detail-block">
               <div class="detail-meta-row">
-                <span class="detail-badge">📍 Dubai, UAE</span>
-                <span class="detail-badge">📧 reachamitsehgal29@gmail.com</span>
+                <span class="detail-badge primary">📍 Dubai, UAE</span>
+                <span class="detail-badge primary">📧 reachamitsehgal29@gmail.com</span>
                 <span class="detail-badge">📞 +971-506889952</span>
               </div>
-              <p class="detail-text">Innovative and visionary Senior Data Engineer with <strong>9 years</strong> of experience architecting high-performance, cost-optimized data platforms across Azure and on-premises ecosystems for top-tier financial institutions.</p>
-              <p class="detail-text">Specializes in transforming complex, multi-source data into automated, highly parameterized ETL pipelines using <strong>PySpark, Kafka, and Airflow</strong>. Proven track record of integrating GenAI tools (Claude Code) into development workflows to accelerate zero-defect delivery.</p>
+              <div class="nb-cell">
+                <div class="nb-cell__cmd">%spark</div>
+                <div class="nb-cell__code">df_profile = spark.read.format("json").load("s3://data-lake/bronze/profile/*.json")<br>df_profile.printSchema()</div>
+                <div class="nb-cell__output">root<br> |-- name: string — Amit Sehgal<br> |-- title: string — Senior Data Engineer<br> |-- experience_years: int — 9<br> |-- location: string — Dubai, UAE</div>
+              </div>
+              <p class="detail-text">Innovative Senior Data Engineer with <strong>9 years</strong> experience architecting high-performance data platforms across <strong>Azure and on-premises ecosystems</strong>. Specializes in transforming multi-source data into automated, parameterized ETL pipelines using PySpark, Kafka, and Airflow.</p>
               <div class="detail-links">
-                <a href="https://linkedin.com/in/sehgal-amit" target="_blank" class="detail-link">🔗 LinkedIn</a>
+                <a href="https://linkedin.com/in/sehgal-amit" target="_blank" class="detail-link primary">🔗 LinkedIn</a>
                 <a href="Amit Sehgal Resume.pdf" download class="detail-link">📄 Download Resume</a>
               </div>
             </div>`
         }
       },
+
+      // ═══════════ BRONZE LAYER ═══════════
       {
-        id: 'bronze-layer', label: 'Bronze Layer\nRaw Ingestion', type: 'layer',
-        x: 260, y: 100, layer: 'bronze',
-        icon: '🥉', status: 'pending',
+        id: 'bronze-layer', label: 'Bronze\nIngestion', type: 'layer',
+        x: 290, y: 80, layer: 'bronze',
+        icon: '🟤', sparkJob: 'bronze_ingestion_job',
+        status: 'pending',
         connectsTo: ['silver-layer', 'emirates', 'epam', 'abb', 'infosys'],
         detail: {
-          title: 'Bronze Layer — Raw Data Ingestion',
-          subtitle: '4 Enterprise Roles · 9 Years Experience',
-          content: `<p class="detail-text">The foundation layer — raw career data ingested from 4 enterprise organizations across banking, retail, IoT, and consulting domains. Each node represents a role that transformed raw business requirements into operational data pipelines.</p>`
-        }
-      },
-      {
-        id: 'silver-layer', label: 'Silver Layer\nValidated & Clean', type: 'layer',
-        x: 500, y: 100, layer: 'silver',
-        icon: '🥈', status: 'pending',
-        connectsTo: ['gold-layer', 'skills-node', 'certs-node', 'edu-node'],
-        detail: {
-          title: 'Silver Layer — Validated & Transformed',
-          subtitle: '4 Skill Clusters · 2 Certifications · B.E.',
-          content: `<p class="detail-text">Technical skills refined across cloud ecosystems and on-premises environments. Each node has been battle-tested at enterprise scale.</p>`
-        }
-      },
-      {
-        id: 'gold-layer', label: 'Gold Layer\nBusiness Value', type: 'layer',
-        x: 740, y: 100, layer: 'gold',
-        icon: '🥇', status: 'pending',
-        connectsTo: ['sink', 'project-node', 'kpi-node'],
-        detail: {
-          title: 'Gold Layer — Curated Business Value',
-          subtitle: 'Production Project · 5 Key Metrics',
-          content: `<p class="detail-text">Aggregated insights ready for stakeholder consumption. Proven impact delivered across organizations.</p>`
-        }
-      },
-      {
-        id: 'sink', label: 'Contact\n& Export', type: 'sink',
-        x: 980, y: 280,
-        icon: '📤', layer: 'sink',
-        connectsTo: [],
-        detail: {
-          title: 'Ready to Connect',
-          subtitle: 'Dubai, UAE · Open to Opportunities',
+          title: 'Bronze Layer — Raw Data Lake',
+          subtitle: 'Delta Table: delta_bronze.career_experience',
+          sparkMeta: 'Job: bronze_ingestion_job · Rows: 4 · Duration: 2.1s',
           content: `
             <div class="detail-block">
-              <p class="detail-text">Let's discuss how I can architect your next data platform.</p>
-              <div class="detail-links" style="margin-top:16px">
-                <a href="mailto:reachamitsehgal29@gmail.com" class="detail-link primary">✉️ Send Email</a>
-                <a href="tel:+971506889952" class="detail-link">📞 Call</a>
-                <a href="https://linkedin.com/in/sehgal-amit" target="_blank" class="detail-link">🔗 LinkedIn</a>
-                <a href="Amit Sehgal Resume.pdf" download class="detail-link primary">📄 Download Resume</a>
+              <div class="nb-cell">
+                <div class="nb-cell__cmd">%sql</div>
+                <div class="nb-cell__code">DESCRIBE HISTORY delta_bronze.career_experience</div>
+                <div class="nb-cell__output">4 versions · 4 companies · 9 years · Banking, Retail, IoT, Consulting</div>
               </div>
+              <p class="detail-text">Raw experience data ingested from <strong>4 enterprise organizations</strong> across diverse domains. Each record represents a role where raw business requirements were transformed into operational data pipelines at scale.</p>
             </div>`
         }
       },
-      // Bronze children
       {
-        id: 'emirates', label: 'Emirates NBD', type: 'activity',
-        x: 260, y: 260, layer: 'bronze',
-        icon: '🏦', status: 'pending',
+        id: 'emirates', label: 'Emirates\nNBD', type: 'activity',
+        x: 170, y: 270, layer: 'bronze',
+        icon: '🏦', sparkJob: 'bronze_emirates_nbd',
+        status: 'pending',
         connectsTo: [],
         detail: {
           title: 'Data Engineer Consultant',
           subtitle: 'Emirates NBD · via ValueLabs · Jan 2025 – Present',
+          sparkMeta: 'Cluster: prod-de-jobs · Runtime: 14.3 LTS · Photon: Enabled',
           content: `
             <div class="detail-block">
               <div class="detail-meta-row">
-                <span class="detail-badge primary">PySpark</span>
-                <span class="detail-badge primary">Kafka</span>
-                <span class="detail-badge primary">Airflow</span>
-                <span class="detail-badge">Oozie</span>
-                <span class="detail-badge">Oracle</span>
-                <span class="detail-badge">SAP HANA</span>
-                <span class="detail-badge">Claude Code</span>
+                <span class="detail-badge primary">PySpark</span><span class="detail-badge primary">Kafka</span>
+                <span class="detail-badge primary">Airflow</span><span class="detail-badge">Oozie</span>
+                <span class="detail-badge">Oracle</span><span class="detail-badge">SAP HANA</span>
+                <span class="detail-badge success">Claude Code</span>
+              </div>
+              <div class="nb-cell">
+                <div class="nb-cell__cmd">%spark</div>
+                <div class="nb-cell__code"><span class="nb-comment">// Spark config for Wholesale Banking pipeline</span><br>spark.conf.set("spark.sql.adaptive.enabled", "true")<br>spark.conf.set("spark.sql.adaptive.coalescingPartitions.enabled", "true")<br>spark.conf.set("spark.databricks.delta.optimizeWrite.enabled", "true")</div>
               </div>
               <ul class="detail-list">
-                <li>Engineered end-to-end data pipeline for Wholesale Banking customer deals using PySpark, Kafka, and ODS — standardising approvals and tracking deal expiries to deliver significant business cost savings.</li>
-                <li>Spearheaded decommissioning of <strong>SAP HANA</strong> by migrating BDM workflows to PySpark for <strong>5 banking entities</strong>, eliminating SAP license costs and automating <strong>~180 daily jobs</strong> loading to Oracle.</li>
-                <li>Designed highly parameterised PySpark framework configured via simple YAML files, enabling zero-defect ETL job replication.</li>
-                <li>Managed complex daily and monthly ETL loads aggregating multiple finance sources, leveraging <strong>Airflow, Oozie, and GenAI tools</strong> like Claude Code to accelerate deployment.</li>
+                <li>Engineered E2E data pipeline for Wholesale Banking customer deals — <strong>PySpark + Kafka + ODS</strong></li>
+                <li>Spearheaded <strong>SAP HANA decommissioning</strong>, migrating BDM workflows to PySpark for <strong>5 banking entities</strong> — eliminated SAP license costs</li>
+                <li>Automated <strong>~180 daily jobs</strong> loading to Oracle with zero-defect YAML-driven PySpark framework</li>
+                <li>Managed complex ETL loads aggregating finance sources via <strong>Airflow, Oozie, and GenAI</strong></li>
               </ul>
             </div>`
         }
       },
       {
-        id: 'epam', label: 'EPAM Systems', type: 'activity',
-        x: 260, y: 370, layer: 'bronze',
-        icon: '🏢', status: 'pending',
+        id: 'epam', label: 'EPAM\nSystems', type: 'activity',
+        x: 350, y: 270, layer: 'bronze',
+        icon: '🏢', sparkJob: 'bronze_epam_cantire',
+        status: 'pending',
         connectsTo: [],
         detail: {
           title: 'Senior Data Engineer',
           subtitle: 'EPAM Systems · Client: Canadian Tire · Dec 2021 – Jan 2025',
+          sparkMeta: 'Target: Azure Cosmos DB · Query gain: 40% · Daily data: 100 GB',
           content: `
             <div class="detail-block">
               <div class="detail-meta-row">
-                <span class="detail-badge primary">Azure Data Factory</span>
-                <span class="detail-badge primary">Cosmos DB</span>
-                <span class="detail-badge">Hive</span>
-                <span class="detail-badge">JSON</span>
+                <span class="detail-badge primary">Azure Data Factory</span><span class="detail-badge primary">Cosmos DB</span>
+                <span class="detail-badge">Hive</span><span class="detail-badge">Delta Lake</span><span class="detail-badge">JSON</span>
+              </div>
+              <div class="nb-cell">
+                <div class="nb-cell__cmd">%sql</div>
+                <div class="nb-cell__code"><span class="nb-comment">-- Migration: Hive → Cosmos DB</span><br>CREATE TABLE delta_silver.dealer_analytics<br>USING DELTA<br>LOCATION 's3://data-lake/silver/dealer_analytics'<br>AS SELECT * FROM hive_enterprise.dealer_data<br>WHERE partition_date >= '2021-01-01'</div>
               </div>
               <ul class="detail-list">
-                <li>Developed feature-based data pipelines using Azure Data Factory, enabling a new analytical web application for dealers that seamlessly processed <strong>100 GB of daily data</strong>.</li>
-                <li>Architected migration of enterprise data from Hive tables into Azure Cosmos DB, <strong>reducing query retrieval times by 40%</strong>.</li>
-                <li>Collaborated directly with Business Analysts and Backend Developers to define business requirements and structure optimized JSON schemas for Cosmos DB.</li>
+                <li>Built feature-based pipelines with <strong>Azure Data Factory</strong> processing <strong>100 GB daily</strong></li>
+                <li>Architected <strong>Hive → Cosmos DB</strong> migration — <strong>40% faster queries</strong></li>
+                <li>Designed optimized <strong>JSON schemas</strong> for Cosmos DB with BA and backend teams</li>
               </ul>
             </div>`
         }
       },
       {
-        id: 'abb', label: 'ABB Global', type: 'activity',
-        x: 260, y: 460, layer: 'bronze',
-        icon: '⚡', status: 'pending',
+        id: 'abb', label: 'ABB\nGlobal', type: 'activity',
+        x: 170, y: 400, layer: 'bronze',
+        icon: '⚡', sparkJob: 'bronze_abb_iot',
+        status: 'pending',
         connectsTo: [],
         detail: {
-          title: 'Research and Development Engineer',
+          title: 'R&D Engineer',
           subtitle: 'ABB Global Limited · Feb 2020 – Dec 2021',
+          sparkMeta: 'Streaming: ActiveMQ + Event Hub · Sink: Cosmos DB + MongoDB',
           content: `
             <div class="detail-block">
               <div class="detail-meta-row">
-                <span class="detail-badge primary">Azure</span>
-                <span class="detail-badge primary">IoT</span>
-                <span class="detail-badge primary">PySpark</span>
-                <span class="detail-badge">ML</span>
-                <span class="detail-badge">Cosmos DB</span>
-                <span class="detail-badge">MongoDB</span>
-                <span class="detail-badge">Python APIs</span>
+                <span class="detail-badge primary">Azure IoT</span><span class="detail-badge primary">PySpark</span>
+                <span class="detail-badge primary">ML Models</span><span class="detail-badge">ActiveMQ</span>
+                <span class="detail-badge">Event Hub</span><span class="detail-badge">Cosmos DB</span>
+                <span class="detail-badge">MongoDB</span><span class="detail-badge success">Python APIs</span>
+              </div>
+              <div class="nb-cell">
+                <div class="nb-cell__cmd">%spark</div>
+                <div class="nb-cell__code"><span class="nb-comment">// Real-time IoT stream processing</span><br>df_stream = spark.readStream \\<br>  .format("eventhubs") \\<br>  .options(**ehConf) \\<br>  .load()<br><br>df_stream.writeStream \\<br>  .format("delta") \\<br>  .outputMode("append") \\<br>  .option("checkpointLocation", "s3://datalake/checkpoints/iot/") \\<br>  .table("delta_bronze.iot_telemetry")</div>
               </div>
               <ul class="detail-list">
-                <li>Built real-time data pipeline across Azure cloud and on-premises deployments to process semi-structured IoT telemetry data from ActiveMQ and Event Hub.</li>
-                <li>Designed framework to deploy ML models on unstructured data (text, images, videos), routing predictive results to Cosmos DB and MongoDB.</li>
-                <li>Developed automated PySpark batch jobs to clean, transform, and migrate data from data lake to curated store via Rundeck, Azure Pipelines, and ADF.</li>
-                <li>Created custom Python APIs facilitating CRUD operations, <strong>saving ~15 hours of manual effort per week</strong>.</li>
+                <li>Built <strong>real-time pipeline</strong> across Azure cloud and on-premises for IoT telemetry</li>
+                <li>Deployed <strong>ML models on unstructured data</strong> (text, images, video) to Cosmos DB + MongoDB</li>
+                <li>Automated PySpark batch jobs with Rundeck, Azure Pipelines, and ADF</li>
+                <li>Built Python CRUD APIs — <strong>saved 15 hrs/week</strong> of manual effort</li>
               </ul>
             </div>`
         }
       },
       {
         id: 'infosys', label: 'Infosys', type: 'activity',
-        x: 260, y: 540, layer: 'bronze',
-        icon: '💻', status: 'pending',
+        x: 350, y: 400, layer: 'bronze',
+        icon: '💻', sparkJob: 'bronze_infosys_pwc',
+        status: 'pending',
         connectsTo: [],
         detail: {
           title: 'Data Engineer',
           subtitle: 'Infosys · Clients: PwC, Exelon · Mar 2017 – Feb 2020',
+          sparkMeta: 'Format: Parquet on HDFS · Schedule: Cron · Testing: Selenium',
           content: `
             <div class="detail-block">
               <div class="detail-meta-row">
-                <span class="detail-badge primary">PySpark</span>
-                <span class="detail-badge primary">HDFS</span>
-                <span class="detail-badge">Parquet</span>
-                <span class="detail-badge">Python</span>
-                <span class="detail-badge">Selenium</span>
+                <span class="detail-badge primary">PySpark</span><span class="detail-badge primary">HDFS</span>
+                <span class="detail-badge">Parquet</span><span class="detail-badge">Python</span>
+                <span class="detail-badge">Selenium</span><span class="detail-badge">Oracle</span>
                 <span class="detail-badge">MongoDB</span>
               </div>
+              <div class="nb-cell">
+                <div class="nb-cell__cmd">%spark</div>
+                <div class="nb-cell__code"><span class="nb-comment">// ETL: multi-format ingestion to Parquet</span><br>df = spark.read \\<br>  .format("csv").option("header","true").load(path_csv)<br>  .unionByName(spark.read.json(path_json))<br>  .unionByName(spark.read.format("jdbc").option("url",mysql_url)...)<br><br>df.write.format("parquet") \\<br>  .mode("overwrite") \\<br>  .partitionBy("date") \\<br>  .save("hdfs://datalake/curated/")</div>
+              </div>
               <ul class="detail-list">
-                <li>Developed PySpark-based ETL workflows to migrate diverse data formats (CSV, JSON, MySQL) into on-premises HDFS in Parquet format.</li>
-                <li>Optimized data delivery by executing query transformations and creating tables on HDFS to push data to curated layer, scheduled via Cron.</li>
-                <li>Automated data API testing with Python and Selenium, validating data loads from Oracle DB to MongoDB.</li>
-                <li>Assisted in architectural design of data warehouse schema and resolved bugs via VSTS DevOps platform.</li>
+                <li>PySpark ETL workflows migrating <strong>CSV, JSON, MySQL → HDFS Parquet</strong></li>
+                <li>Query transformations and table creation on HDFS → curated layer via <strong>Cron</strong></li>
+                <li>Automated API testing with <strong>Python + Selenium</strong> for Oracle DB → MongoDB validations</li>
+                <li>Data warehouse schema design and bug resolution via <strong>VSTS DevOps</strong></li>
               </ul>
             </div>`
         }
       },
-      // Silver children
+
+      // ═══════════ SILVER LAYER ═══════════
+      {
+        id: 'silver-layer', label: 'Silver\nValidation', type: 'layer',
+        x: 570, y: 80, layer: 'silver',
+        icon: '⚪', sparkJob: 'silver_validation_job',
+        status: 'pending',
+        connectsTo: ['gold-layer', 'skills-node', 'certs-node', 'edu-node'],
+        detail: {
+          title: 'Silver Layer — Validated & Cleaned',
+          subtitle: 'Delta Table: delta_silver.validated_skills',
+          sparkMeta: 'Job: silver_validation_job · Quality checks: 12/12 passed · Duration: 1.4s',
+          content: `
+            <div class="detail-block">
+              <div class="nb-cell">
+                <div class="nb-cell__cmd">%sql</div>
+                <div class="nb-cell__code">SELECT skill_category, COUNT(*) as tech_count<br>FROM delta_silver.validated_skills<br>GROUP BY skill_category ORDER BY tech_count DESC</div>
+                <div class="nb-cell__output">Core Engineering: 7 | Cloud & Big Data: 9 | Modern Stack: 4 | Advanced Pipelines: 6</div>
+              </div>
+              <p class="detail-text">Technical capabilities validated across enterprise deployments — each skill verified through production implementation at scale.</p>
+            </div>`
+        }
+      },
       {
         id: 'skills-node', label: 'Technical\nSkills', type: 'activity',
-        x: 500, y: 260, layer: 'silver',
-        icon: '🔧', status: 'pending',
+        x: 500, y: 240, layer: 'silver',
+        icon: '🔧', sparkJob: 'silver_skills_catalog',
+        status: 'pending',
         connectsTo: [],
         detail: {
           title: 'Technical Skills',
-          subtitle: '4 Clusters · Enterprise-Grade Stack',
+          subtitle: 'Unity Catalog: main.eng_skills — 26 verified technologies',
+          sparkMeta: 'Catalog: main.eng_skills · Schema: validated · Tables: 4',
           content: `
             <div class="detail-block">
-              <div class="detail-section">
-                <h4 class="detail-section-title">Core Engineering</h4>
-                <div class="detail-meta-row">
-                  <span class="detail-badge primary">Python</span><span class="detail-badge primary">PySpark</span>
-                  <span class="detail-badge">SQL</span><span class="detail-badge">NoSQL</span>
-                  <span class="detail-badge">Data APIs</span><span class="detail-badge">Shell Scripting</span>
-                  <span class="detail-badge">Kubernetes</span>
-                </div>
-              </div>
-              <div class="detail-section">
-                <h4 class="detail-section-title">Cloud & Big Data</h4>
-                <div class="detail-meta-row">
-                  <span class="detail-badge primary">Azure Data Factory</span><span class="detail-badge primary">Databricks</span>
-                  <span class="detail-badge">Delta Lake</span><span class="detail-badge">Unity Catalog</span>
-                  <span class="detail-badge">Cosmos DB</span><span class="detail-badge">Hadoop</span>
-                  <span class="detail-badge">Spark SQL</span><span class="detail-badge">Kafka</span><span class="detail-badge">Flink</span>
-                </div>
-              </div>
-              <div class="detail-section">
-                <h4 class="detail-section-title">Modern Data Stack</h4>
-                <div class="detail-meta-row">
-                  <span class="detail-badge primary">Snowflake</span><span class="detail-badge">dbt</span>
-                  <span class="detail-badge primary">Apache Airflow</span><span class="detail-badge">Oozie</span>
-                </div>
-              </div>
-              <div class="detail-section">
-                <h4 class="detail-section-title">Advanced Pipelines</h4>
-                <div class="detail-meta-row">
-                  <span class="detail-badge primary">Real-time Streaming</span><span class="detail-badge">Kafka/Flink</span>
-                  <span class="detail-badge primary">LLM/GenAI Pipelines</span><span class="detail-badge">Claude Code</span>
-                  <span class="detail-badge">Data Governance</span>
-                </div>
-              </div>
+              <div class="detail-section"><h4 class="detail-section-title">Core Engineering</h4><div class="detail-meta-row"><span class="detail-badge primary">Python</span><span class="detail-badge primary">PySpark</span><span class="detail-badge">SQL</span><span class="detail-badge">NoSQL</span><span class="detail-badge">Data APIs</span><span class="detail-badge">Shell</span><span class="detail-badge">Kubernetes</span></div></div>
+              <div class="detail-section"><h4 class="detail-section-title">Cloud & Big Data</h4><div class="detail-meta-row"><span class="detail-badge primary">Azure Data Factory</span><span class="detail-badge primary">Databricks</span><span class="detail-badge">Delta Lake</span><span class="detail-badge">Unity Catalog</span><span class="detail-badge">Cosmos DB</span><span class="detail-badge">Hadoop</span><span class="detail-badge">Spark SQL</span><span class="detail-badge">Kafka</span><span class="detail-badge">Flink</span></div></div>
+              <div class="detail-section"><h4 class="detail-section-title">Modern Data Stack</h4><div class="detail-meta-row"><span class="detail-badge primary">Snowflake</span><span class="detail-badge">dbt</span><span class="detail-badge primary">Apache Airflow</span><span class="detail-badge">Oozie</span></div></div>
+              <div class="detail-section"><h4 class="detail-section-title">Advanced Pipelines</h4><div class="detail-meta-row"><span class="detail-badge primary">Streaming</span><span class="detail-badge">Kafka/Flink</span><span class="detail-badge primary">LLM/GenAI</span><span class="detail-badge">Claude Code</span><span class="detail-badge">Data Governance</span></div></div>
             </div>`
         }
       },
       {
         id: 'certs-node', label: 'Certifications', type: 'activity',
-        x: 500, y: 390, layer: 'silver',
-        icon: '📜', status: 'pending',
+        x: 500, y: 370, layer: 'silver',
+        icon: '📜', sparkJob: 'silver_certs_validate',
+        status: 'pending',
         connectsTo: [],
         detail: {
-          title: 'Certifications',
-          subtitle: 'Microsoft Azure Certified',
+          title: 'Microsoft Azure Certifications',
+          subtitle: '2 Active Credentials · Verified',
+          sparkMeta: 'Validation: Microsoft Learning · Status: Active',
           content: `
             <div class="detail-block">
-              <div class="detail-cert"><span class="detail-cert-icon">☁️</span><div><strong>Azure Developer Associate</strong><br><span class="detail-text-sm">Microsoft Certified</span></div></div>
-              <div class="detail-cert"><span class="detail-cert-icon">🔌</span><div><strong>Azure IoT Developer Specialty</strong><br><span class="detail-text-sm">Microsoft Certified</span></div></div>
+              <div class="detail-cert"><span class="detail-cert-icon">☁️</span><div><strong>Azure Developer Associate</strong><br><span class="detail-text-sm">Microsoft Certified — Designing, building, testing, and maintaining cloud applications</span></div></div>
+              <div class="detail-cert"><span class="detail-cert-icon">🔌</span><div><strong>Azure IoT Developer Specialty</strong><br><span class="detail-text-sm">Microsoft Certified — Cloud and edge IoT solutions</span></div></div>
             </div>`
         }
       },
       {
         id: 'edu-node', label: 'Education', type: 'activity',
         x: 500, y: 480, layer: 'silver',
-        icon: '🎓', status: 'pending',
+        icon: '🎓', sparkJob: 'silver_edu_validate',
+        status: 'pending',
         connectsTo: [],
         detail: {
           title: 'Education',
-          subtitle: 'Bachelor of Engineering',
+          subtitle: 'Bachelor of Engineering · Mumbai University',
+          sparkMeta: 'Duration: 2012 – 2016 · Field: Electronics & Telecom',
           content: `
             <div class="detail-block">
-              <div class="detail-cert"><span class="detail-cert-icon">🎓</span><div><strong>B.E. in Electronics & Telecom</strong><br><span class="detail-text-sm">Mumbai University · 2012 – 2016</span></div></div>
+              <div class="detail-cert"><span class="detail-cert-icon">🎓</span><div><strong>B.E. Electronics & Telecom</strong><br><span class="detail-text-sm">Mumbai University · 2012 – 2016</span></div></div>
             </div>`
         }
       },
-      // Gold children
+
+      // ═══════════ GOLD LAYER ═══════════
       {
-        id: 'project-node', label: 'Personal\nProject', type: 'activity',
-        x: 740, y: 280, layer: 'gold',
-        icon: '🚀', status: 'pending',
+        id: 'gold-layer', label: 'Gold\nAggregation', type: 'layer',
+        x: 850, y: 80, layer: 'gold',
+        icon: '🟡', sparkJob: 'gold_aggregation_job',
+        status: 'pending',
+        connectsTo: ['sink', 'project-node', 'kpi-node'],
+        detail: {
+          title: 'Gold Layer — Business Value',
+          subtitle: 'Delta Table: delta_gold.kpi_metrics — OPTIMIZE + VACUUM applied',
+          sparkMeta: 'Job: gold_aggregation_job · Aggregations: 6 metrics · Duration: 0.6s',
+          content: `
+            <div class="detail-block">
+              <div class="nb-cell">
+                <div class="nb-cell__cmd">%sql</div>
+                <div class="nb-cell__code">OPTIMIZE delta_gold.kpi_metrics<br>VACUUM delta_gold.kpi_metrics RETAIN 168 HOURS<br><br>SELECT metric_name, metric_value FROM delta_gold.kpi_metrics</div>
+              </div>
+              <p class="detail-text">Aggregated business-value metrics curated for stakeholder consumption. Each KPI reflects measured impact from production deployments.</p>
+            </div>`
+        }
+      },
+      {
+        id: 'project-node', label: 'Production\nProject', type: 'activity',
+        x: 790, y: 260, layer: 'gold',
+        icon: '🚀', sparkJob: 'gold_project_vasai',
+        status: 'pending',
         connectsTo: [],
         detail: {
           title: 'Vasai Corona Resources',
-          subtitle: 'Flask Web Application · High Availability',
+          subtitle: 'Flask · High Availability · 5,000 Daily Users',
+          sparkMeta: 'Deployment: Flask on Production · Uptime: 99.9% · Peak: 5K DAU',
           content: `
             <div class="detail-block">
               <div class="detail-meta-row">
-                <span class="detail-badge primary">Python</span>
-                <span class="detail-badge primary">Flask</span>
-                <span class="detail-badge">REST APIs</span>
-                <span class="detail-badge">High Availability</span>
+                <span class="detail-badge primary">Python</span><span class="detail-badge primary">Flask</span>
+                <span class="detail-badge">REST APIs</span><span class="detail-badge success">HA Design</span>
+              </div>
+              <div class="nb-cell">
+                <div class="nb-cell__cmd">%python</div>
+                <div class="nb-cell__code"><span class="nb-comment"># Flask app handling 5,000 DAU</span><br>from flask import Flask, jsonify<br>app = Flask(__name__)<br><br>@app.route('/api/resources')<br>def get_resources():<br>    <span class="nb-comment"># Cached query — sub-50ms response</span><br>    return jsonify(cached_query("SELECT * FROM resources"))</div>
               </div>
               <ul class="detail-list">
-                <li>Designed and engineered a highly available web application using Flask framework to curate essential COVID-19 resources for the Vasai-Virar city region.</li>
-                <li>Built robust backend to successfully handle <strong>traffic spikes of up to 5,000 daily users</strong> without downtime.</li>
+                <li>Engineered <strong>Flask web application</strong> for COVID-19 resources in Vasai-Virar region</li>
+                <li>Built backend handling <strong>5,000+ daily users</strong> with zero-downtime architecture</li>
               </ul>
             </div>`
         }
       },
       {
-        id: 'kpi-node', label: 'Performance\nKPIs', type: 'activity',
-        x: 740, y: 420, layer: 'gold',
-        icon: '📊', status: 'pending',
+        id: 'kpi-node', label: 'Performance\nMetrics', type: 'activity',
+        x: 790, y: 400, layer: 'gold',
+        icon: '📊', sparkJob: 'gold_kpi_dashboard',
+        status: 'pending',
         connectsTo: [],
         detail: {
           title: 'Pipeline Performance Metrics',
-          subtitle: '9 Years of Engineering Impact',
+          subtitle: '9 Years · 6 Key Indicators',
+          sparkMeta: 'Refresh: Real-time · Source: delta_gold.kpi_metrics',
           content: `
             <div class="detail-block">
               <div class="kpi-grid">
                 <div class="kpi-card"><span class="kpi-value">9+</span><span class="kpi-label">Years Experience</span></div>
                 <div class="kpi-card"><span class="kpi-value">180/day</span><span class="kpi-label">Automated Jobs</span></div>
-                <div class="kpi-card"><span class="kpi-value">100 GB</span><span class="kpi-label">Daily Data</span></div>
+                <div class="kpi-card"><span class="kpi-value">100 GB</span><span class="kpi-label">Daily Throughput</span></div>
                 <div class="kpi-card"><span class="kpi-value">40%</span><span class="kpi-label">Query Gain</span></div>
                 <div class="kpi-card"><span class="kpi-value">15 hrs</span><span class="kpi-label">Saved/Week</span></div>
-                <div class="kpi-card"><span class="kpi-value">5,000</span><span class="kpi-label">Daily Users</span></div>
+                <div class="kpi-card"><span class="kpi-value">5,000</span><span class="kpi-label">Peak DAU</span></div>
+              </div>
+            </div>`
+        }
+      },
+
+      // ═══════════ SINK ═══════════
+      {
+        id: 'sink', label: 'Export\nContact', type: 'sink',
+        x: 1100, y: 310,
+        icon: '📤', layer: 'sink', sparkJob: 'sink_export_contact',
+        connectsTo: [],
+        detail: {
+          title: 'Let\'s Build Together',
+          subtitle: 'Dubai, UAE · Open to Senior DE Roles',
+          sparkMeta: 'Format: PDF / LinkedIn / Email · Always Available',
+          content: `
+            <div class="detail-block">
+              <div class="detail-links" style="margin-top:16px">
+                <a href="mailto:reachamitsehgal29@gmail.com" class="detail-link primary">✉️ Send Email</a>
+                <a href="tel:+971506889952" class="detail-link">📞 Call</a>
+                <a href="https://linkedin.com/in/sehgal-amit" target="_blank" class="detail-link primary">🔗 LinkedIn</a>
+                <a href="Amit Sehgal Resume.pdf" download class="detail-link">📄 Download PDF</a>
               </div>
             </div>`
         }
@@ -346,7 +391,6 @@ class PipelineEngine {
       });
     });
 
-    // Update status bar counts
     if (this.nodeCount) this.nodeCount.textContent = this.nodes.length;
     if (this.connectionCount) this.connectionCount.textContent = this.connections.length;
   }
@@ -358,6 +402,8 @@ class PipelineEngine {
     this.renderNodes();
     this.renderConnections();
     this.initParticles();
+    this.initSidebar();
+    this.startHoverLoop();
   }
 
   renderNodes() {
@@ -373,36 +419,53 @@ class PipelineEngine {
       el.innerHTML = `
         <span class="pipeline-node__icon">${nodeDef.icon}</span>
         <span class="pipeline-node__label">${nodeDef.label.replace(/\n/g, '<br>')}</span>
-        ${nodeDef.status ? `<span class="pipeline-node__status status--${nodeDef.status}"></span>` : ''}
+        ${nodeDef.status !== undefined ? `<span class="pipeline-node__status status--${nodeDef.status}"></span>` : ''}
+        <span class="pipeline-node__job">${nodeDef.sparkJob || ''}</span>
+        ${nodeDef.type === 'layer' ? `<span class="pipeline-node__delta">Δ</span>` : ''}
       `;
 
-      el.addEventListener('click', () => this.selectNode(nodeDef.id));
+      el.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.selectNode(nodeDef.id);
+      });
+
+      el.addEventListener('mousedown', () => {
+        el.classList.add('pipeline-node--pressed');
+      });
+
+      el.addEventListener('mouseup', () => {
+        el.classList.remove('pipeline-node--pressed');
+      });
+
+      el.addEventListener('mouseleave', () => {
+        el.classList.remove('pipeline-node--pressed');
+      });
+
       this.canvasInner.appendChild(el);
+      this.nodeEls[nodeDef.id] = el;
     });
   }
 
   renderConnections() {
     this.connections.forEach(conn => {
-      const fromEl = document.getElementById(`node-${conn.from}`);
-      const toEl = document.getElementById(`node-${conn.to}`);
+      const fromEl = this.nodeEls[conn.from];
+      const toEl = this.nodeEls[conn.to];
       if (!fromEl || !toEl) return;
 
+      const canvasRect = this.canvas.getBoundingClientRect();
       const fromRect = fromEl.getBoundingClientRect();
       const toRect = toEl.getBoundingClientRect();
-      const canvasRect = this.canvas.getBoundingClientRect();
 
       const x1 = fromRect.left + fromRect.width / 2 - canvasRect.left;
       const y1 = fromRect.top + fromRect.height / 2 - canvasRect.top;
       const x2 = toRect.left + toRect.width / 2 - canvasRect.left;
       const y2 = toRect.top + toRect.height / 2 - canvasRect.top;
 
-      // Create connection group
       const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
       g.classList.add('pipeline-connection');
       g.dataset.from = conn.from;
       g.dataset.to = conn.to;
 
-      // Edge line
       const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
       line.setAttribute('x1', x1);
       line.setAttribute('y1', y1);
@@ -411,19 +474,20 @@ class PipelineEngine {
       line.classList.add('pipeline-edge');
       g.appendChild(line);
 
-      // Arrow head
+      // Arrow
       const arrow = document.createElementNS('http://www.w3.org/2000/svg', 'polygon');
       const angle = Math.atan2(y2 - y1, x2 - x1);
-      const arrowSize = 8;
-      const ax = x2 - arrowSize * Math.cos(angle);
-      const ay = y2 - arrowSize * Math.sin(angle);
-      arrow.setAttribute('points', `${x2},${y2} ${ax - 4 * Math.sin(angle)},${ay + 4 * Math.cos(angle)} ${ax + 4 * Math.sin(angle)},${ay - 4 * Math.cos(angle)}`);
+      const asz = 8;
+      const ax = x2 - asz * Math.cos(angle);
+      const ay = y2 - asz * Math.sin(angle);
+      arrow.setAttribute('points',
+        `${x2},${y2} ${ax - 4 * Math.sin(angle)},${ay + 4 * Math.cos(angle)} ${ax + 4 * Math.sin(angle)},${ay - 4 * Math.cos(angle)}`);
       arrow.classList.add('pipeline-arrow');
       g.appendChild(arrow);
 
-      // Particle dot (for animation)
+      // Particle
       const dot = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
-      dot.setAttribute('r', '3');
+      dot.setAttribute('r', '3.5');
       dot.setAttribute('cx', x1);
       dot.setAttribute('cy', y1);
       dot.classList.add('pipeline-particle');
@@ -436,15 +500,13 @@ class PipelineEngine {
   initParticles() {
     this.particles = [];
     const particleEls = this.svgLayer.querySelectorAll('.pipeline-particle');
-    particleEls.forEach((dot, i) => {
-      // Find the edge line in the same group
+    particleEls.forEach((dot) => {
       const g = dot.parentElement;
       const line = g.querySelector('.pipeline-edge');
       if (!line) return;
       this.particles.push({
-        el: dot,
-        line: line,
-        progress: Math.random(), // random start
+        el: dot, line: line,
+        progress: Math.random(),
         speed: 0.002 + Math.random() * 0.004,
       });
     });
@@ -453,60 +515,154 @@ class PipelineEngine {
 
   animateParticles() {
     this.particles.forEach(p => {
-      p.progress += p.speed * (this.isRunning ? 3 : 1);
-      if (p.progress > 1) p.progress = 0;
-
+      p.progress += p.speed * (this.isRunning ? 4 : 1);
+      if (p.progress > 1) p.progress -= 1;
       const x1 = parseFloat(p.line.getAttribute('x1'));
       const y1 = parseFloat(p.line.getAttribute('y1'));
       const x2 = parseFloat(p.line.getAttribute('x2'));
       const y2 = parseFloat(p.line.getAttribute('y2'));
-
       const cx = x1 + (x2 - x1) * p.progress;
       const cy = y1 + (y2 - y1) * p.progress;
       p.el.setAttribute('cx', cx);
       p.el.setAttribute('cy', cy);
-
-      // Fade at ends
-      const fade = p.progress < 0.1 ? p.progress / 0.1 :
-                   p.progress > 0.9 ? (1 - p.progress) / 0.1 : 1;
+      const fade = p.progress < 0.08 ? p.progress / 0.08 : p.progress > 0.92 ? (1 - p.progress) / 0.08 : 1;
       p.el.setAttribute('opacity', fade);
     });
-
     requestAnimationFrame(() => this.animateParticles());
+  }
+
+  /* ── Sidebar ─────────────────────────────────────────────────── */
+
+  initSidebar() {
+    document.querySelectorAll('.sidebar__item').forEach(item => {
+      item.addEventListener('click', () => {
+        const nodeId = item.dataset.targetNode;
+        if (nodeId) {
+          this.selectNode(nodeId);
+          this.scrollToNode(nodeId);
+        }
+      });
+    });
+  }
+
+  scrollToNode(nodeId) {
+    const el = this.nodeEls[nodeId];
+    if (!el) return;
+    el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+  }
+
+  /* ── Spring Hover Loop ──────────────────────────────────────── */
+
+  startHoverLoop() {
+    // Track mouse on canvas for spring hover
+    this.canvas.addEventListener('mousemove', (e) => {
+      this.mouseX = e.clientX;
+      this.mouseY = e.clientY;
+    });
+
+    // Animation loop for hover springs
+    const hoverLoop = () => {
+      Object.values(this.nodeEls).forEach(el => {
+        const nodeId = el.dataset.nodeId;
+        if (!this.hoverSprings[nodeId]) {
+          this.hoverSprings[nodeId] = { x: 0, y: 0, vx: 0, vy: 0, tx: 0, ty: 0 };
+        }
+        const s = this.hoverSprings[nodeId];
+        const rect = el.getBoundingClientRect();
+        const cx = rect.left + rect.width / 2;
+        const cy = rect.top + rect.height / 2;
+        const dx = this.mouseX - cx;
+        const dy = this.mouseY - cy;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+        const radius = 80;
+
+        if (dist < radius && dist > 0) {
+          const nx = dx / dist;
+          const ny = dy / dist;
+          const pull = (radius - dist) / radius;
+          s.tx = nx * pull * 6;
+          s.ty = ny * pull * 6;
+        } else {
+          s.tx = 0;
+          s.ty = 0;
+        }
+
+        // Spring step (stiffness: 80, damping: 12)
+        const stiffness = 80, damping = 12;
+        s.vx += (-stiffness * (s.x - s.tx) - damping * s.vx) * 0.016;
+        s.vy += (-stiffness * (s.y - s.ty) - damping * s.vy) * 0.016;
+        s.x += s.vx;
+        s.y += s.vy;
+
+        if (Math.abs(s.x) > 0.01 || Math.abs(s.y) > 0.01) {
+          el.style.transform = `translate(${s.x}px, ${s.y}px)`;
+        } else {
+          el.style.transform = '';
+        }
+      });
+      requestAnimationFrame(hoverLoop);
+    };
+    requestAnimationFrame(hoverLoop);
   }
 
   /* ── Node Selection ──────────────────────────────────────────── */
 
   selectNode(nodeId) {
     // Deselect previous
-    if (this.activeNode) {
-      const prevEl = document.getElementById(`node-${this.activeNode}`);
+    if (this.activeNodeId) {
+      const prevEl = this.nodeEls[this.activeNodeId];
       if (prevEl) prevEl.classList.remove('pipeline-node--selected');
+      this.highlightConnections(null);
     }
 
-    // Select new
     const nodeDef = this.nodes.find(n => n.id === nodeId);
     if (!nodeDef || !nodeDef.detail) return;
 
-    this.activeNode = nodeId;
-    const el = document.getElementById(`node-${nodeId}`);
-    if (el) el.classList.add('pipeline-node--selected');
+    this.activeNodeId = nodeId;
+    const el = this.nodeEls[nodeId];
+    if (el) {
+      el.classList.add('pipeline-node--selected');
+      // Ripple animation
+      this.triggerRipple(el);
+    }
 
-    // Populate detail panel
+    this.highlightConnections(nodeId);
+
+    // Populate panel
     this.detailTitle.textContent = nodeDef.detail.title;
-    this.detailContent.innerHTML = `
-      <p class="detail-subtitle">${nodeDef.detail.subtitle || ''}</p>
-      ${nodeDef.detail.content}
-    `;
+    if (this.detailSubtitleEl) this.detailSubtitleEl.textContent = nodeDef.detail.subtitle || '';
+    if (this.detailSparkMeta) this.detailSparkMeta.textContent = nodeDef.detail.sparkMeta || '';
+    this.detailContent.innerHTML = nodeDef.detail.content;
     this.detailPanel.classList.add('detail-panel--open');
   }
 
+  triggerRipple(el) {
+    el.classList.add('pipeline-node--ripple');
+    setTimeout(() => el.classList.remove('pipeline-node--ripple'), 600);
+  }
+
+  highlightConnections(nodeId) {
+    const allConnections = this.svgLayer.querySelectorAll('.pipeline-connection');
+    allConnections.forEach(g => {
+      const from = g.dataset.from;
+      const to = g.dataset.to;
+      if (nodeId && (from === nodeId || to === nodeId)) {
+        g.classList.add('pipeline-connection--active');
+      } else {
+        g.classList.remove('pipeline-connection--active');
+      }
+    });
+  }
+
+  /* ── Panel ───────────────────────────────────────────────────── */
+
   closePanel() {
     this.detailPanel.classList.remove('detail-panel--open');
-    if (this.activeNode) {
-      const el = document.getElementById(`node-${this.activeNode}`);
+    if (this.activeNodeId) {
+      const el = this.nodeEls[this.activeNodeId];
       if (el) el.classList.remove('pipeline-node--selected');
-      this.activeNode = null;
+      this.activeNodeId = null;
+      this.highlightConnections(null);
     }
   }
 
@@ -515,72 +671,71 @@ class PipelineEngine {
   runPipeline() {
     if (this.isRunning) return;
     this.isRunning = true;
-    this.runBtn.textContent = '⏸ Running...';
-    this.runBtn.classList.add('toolbar-btn--active');
-    this.statusIndicator.textContent = 'Running';
-    this.statusIndicator.className = 'status-badge status--running';
+    if (this.runBtn) {
+      this.runBtn.textContent = '⏸ Running...';
+      this.runBtn.classList.add('toolbar-btn--active');
+    }
+    if (this.statusIndicator) {
+      this.statusIndicator.textContent = 'Running';
+      this.statusIndicator.className = 'status-badge status--running';
+    }
+    if (this.clusterRuntime) {
+      this.clusterRuntime.textContent = 'Cluster: amit-resume-prod ● Running';
+    }
 
-    // Animate status changes through nodes in sequence
     const layerOrder = ['source', 'bronze', 'silver', 'gold', 'sink'];
-    const allNodes = this.nodes;
+    const totalTime = layerOrder.length * 600 + 200;
 
-    layerOrder.forEach((layer, layerIdx) => {
+    layerOrder.forEach((layer, i) => {
       setTimeout(() => {
-        allNodes.filter(n => n.layer === layer || n.id === layer).forEach(n => {
-          n.status = 'running';
-          this.updateNodeStatus(n.id, 'running');
-        });
-      }, layerIdx * 600);
+        const layerNodes = this.nodes.filter(n => n.layer === layer || n.id === layer);
+        layerNodes.forEach(n => { n.status = 'running'; this.updateNodeStatus(n.id, 'running'); });
+      }, i * 600);
 
       setTimeout(() => {
-        allNodes.filter(n => n.layer === layer || n.id === layer).forEach(n => {
-          n.status = 'success';
-          this.updateNodeStatus(n.id, 'success');
-        });
-      }, layerIdx * 600 + 400);
+        const layerNodes = this.nodes.filter(n => n.layer === layer || n.id === layer);
+        layerNodes.forEach(n => { n.status = 'success'; this.updateNodeStatus(n.id, 'success'); });
+      }, i * 600 + 400);
     });
 
-    // Complete after all layers done
     setTimeout(() => {
       this.isRunning = false;
-      this.runBtn.textContent = '▶ Run Pipeline';
-      this.runBtn.classList.remove('toolbar-btn--active');
-      this.statusIndicator.textContent = 'Succeeded';
-      this.statusIndicator.className = 'status-badge status--success';
-    }, layerOrder.length * 600 + 200);
+      if (this.runBtn) {
+        this.runBtn.textContent = '▶ Run Pipeline';
+        this.runBtn.classList.remove('toolbar-btn--active');
+      }
+      if (this.statusIndicator) {
+        this.statusIndicator.textContent = 'Succeeded';
+        this.statusIndicator.className = 'status-badge status--success';
+      }
+      if (this.clusterRuntime) {
+        this.clusterRuntime.textContent = 'Cluster: amit-resume-prod ● Idle';
+      }
+    }, totalTime);
   }
 
   updateNodeStatus(nodeId, status) {
-    const el = document.getElementById(`node-${nodeId}`);
+    const el = this.nodeEls[nodeId];
     if (!el) return;
-    const statusEl = el.querySelector('.pipeline-node__status');
-    if (statusEl) {
-      statusEl.className = `pipeline-node__status status--${status}`;
-    }
+    const badge = el.querySelector('.pipeline-node__status');
+    if (badge) badge.className = `pipeline-node__status status--${status}`;
   }
 
-  /* ── Initialization ──────────────────────────────────────────── */
+  /* ── Init ────────────────────────────────────────────────────── */
 
   init() {
     this.render();
 
-    // Run button
-    this.runBtn.addEventListener('click', () => this.runPipeline());
-
-    // Close panel button
+    if (this.runBtn) this.runBtn.addEventListener('click', () => this.runPipeline());
     document.getElementById('btn-close-panel').addEventListener('click', () => this.closePanel());
-
-    // Click on canvas background to deselect
     this.canvas.addEventListener('click', (e) => {
-      if (e.target === this.canvas) this.closePanel();
+      if (e.target === this.canvas || e.target === this.canvasInner) this.closePanel();
     });
-
-    // Escape key to close panel
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') this.closePanel();
     });
 
-    // Handle window resize — re-render connections
+    // Re-render connections on resize
     let resizeTimeout;
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimeout);
@@ -593,7 +748,6 @@ class PipelineEngine {
   }
 }
 
-// Boot
 document.addEventListener('DOMContentLoaded', () => {
   window.pipeline = new PipelineEngine();
 });

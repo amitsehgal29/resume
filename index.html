@@ -32,8 +32,7 @@
     "telephone": "+971-506889952",
     "address": { "@type": "PostalAddress", "addressLocality": "Dubai", "addressCountry": "AE" },
     "url": "https://linkedin.com/in/sehgal-amit",
-    "alumniOf": { "@type": "CollegeOrUniversity", "name": "Mumbai University" },
-    "knowsAbout": ["PySpark", "Apache Kafka", "Apache Airflow", "Azure Data Factory", "Databricks", "ETL Pipelines", "Data Engineering"]
+    "alumniOf": { "@type": "CollegeOrUniversity", "name": "Mumbai University" }
   }
   </script>
 </head>
@@ -58,27 +57,95 @@
   </header>
 
   <!-- ════════════════════════════════════════════════════════════
-       MAIN AREA — Canvas + Detail Panel
+       CLUSTER CONFIG BAR
+       ════════════════════════════════════════════════════════════ -->
+  <div class="cluster-bar">
+    <span id="cluster-runtime" class="cluster-bar__item">Cluster: amit-resume-prod ● Idle</span>
+    <span class="cluster-bar__sep">|</span>
+    <span class="cluster-bar__item">Runtime: 14.3 LTS (Spark 3.5.0, Scala 2.12)</span>
+    <span class="cluster-bar__sep">|</span>
+    <span class="cluster-bar__item">Worker: 8–16 cores, 56 GB · Driver: Standard_E8s_v3</span>
+    <span class="cluster-bar__sep">|</span>
+    <span class="cluster-bar__item"><span class="photon-badge">PHOTON</span> Enabled</span>
+    <span class="cluster-bar__sep">|</span>
+    <span class="cluster-bar__item">DBU: 2.25/hr</span>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════
+       MAIN AREA — Sidebar + Canvas + Detail Panel
        ════════════════════════════════════════════════════════════ -->
   <div class="main-area">
+
+    <!-- Sidebar -->
+    <nav class="sidebar" aria-label="Pipeline navigation">
+      <div class="sidebar__title">Workspace</div>
+      <div class="sidebar__item" data-target-node="source">
+        <span class="sidebar__icon">📥</span> <span>Source</span>
+      </div>
+      <div class="sidebar__item" data-target-node="bronze-layer">
+        <span class="sidebar__icon">🟤</span> <span>Bronze</span>
+      </div>
+      <div class="sidebar__item" data-target-node="silver-layer">
+        <span class="sidebar__icon">⚪</span> <span>Silver</span>
+      </div>
+      <div class="sidebar__item" data-target-node="gold-layer">
+        <span class="sidebar__icon">🟡</span> <span>Gold</span>
+      </div>
+      <div class="sidebar__item" data-target-node="sink">
+        <span class="sidebar__icon">📤</span> <span>Export</span>
+      </div>
+      <div class="sidebar__title" style="margin-top: var(--space-md)">Jobs</div>
+      <div class="sidebar__item" data-target-node="emirates">
+        <span class="sidebar__icon">🏦</span> <span>emirates_nbd</span>
+      </div>
+      <div class="sidebar__item" data-target-node="epam">
+        <span class="sidebar__icon">🏢</span> <span>epam_systems</span>
+      </div>
+      <div class="sidebar__item" data-target-node="abb">
+        <span class="sidebar__icon">⚡</span> <span>abb_global</span>
+      </div>
+      <div class="sidebar__item" data-target-node="infosys">
+        <span class="sidebar__icon">💻</span> <span>infosys</span>
+      </div>
+      <div class="sidebar__title" style="margin-top: var(--space-md)">Catalog</div>
+      <div class="sidebar__item" data-target-node="skills-node">
+        <span class="sidebar__icon">🔧</span> <span>skills</span>
+      </div>
+      <div class="sidebar__item" data-target-node="certs-node">
+        <span class="sidebar__icon">📜</span> <span>certifications</span>
+      </div>
+      <div class="sidebar__item" data-target-node="edu-node">
+        <span class="sidebar__icon">🎓</span> <span>education</span>
+      </div>
+      <div class="sidebar__title" style="margin-top: var(--space-md)">Metrics</div>
+      <div class="sidebar__item" data-target-node="project-node">
+        <span class="sidebar__icon">🚀</span> <span>project</span>
+      </div>
+      <div class="sidebar__item" data-target-node="kpi-node">
+        <span class="sidebar__icon">📊</span> <span>kpi_dashboard</span>
+      </div>
+    </nav>
 
     <!-- Pipeline Canvas -->
     <main id="pipeline-canvas" class="pipeline-canvas">
       <div class="pipeline-canvas__inner">
         <svg id="pipeline-svg" class="pipeline-svg-layer" xmlns="http://www.w3.org/2000/svg"></svg>
-        <!-- Nodes are rendered here by pipeline-engine.js -->
       </div>
     </main>
 
-    <!-- Detail Panel (slides in from right) -->
+    <!-- Detail Panel -->
     <aside id="detail-panel" class="detail-panel">
       <div class="detail-panel__header">
-        <h2 id="detail-title" class="detail-panel__title">Select a node</h2>
+        <div class="detail-panel__header-text">
+          <h2 id="detail-title" class="detail-panel__title">Select a node</h2>
+          <p id="detail-subtitle" class="detail-panel__subtitle"></p>
+        </div>
         <button id="btn-close-panel" class="detail-panel__close" aria-label="Close panel">✕</button>
       </div>
+      <div class="detail-panel__spark-meta" id="detail-spark-meta">Click any node on the canvas or sidebar to view details</div>
       <div id="detail-content" class="detail-panel__body">
         <p class="detail-text" style="color: var(--color-text-tertiary); text-align: center; margin-top: 48px;">
-          ← Click any pipeline node<br>to see details here
+          ← Click a pipeline node<br>to explore resume data
         </p>
       </div>
     </aside>
@@ -92,7 +159,8 @@
     <span class="statusbar__item">Pipeline: amit_resume_dag</span>
     <span class="statusbar__item">Nodes: <span id="node-count">0</span></span>
     <span class="statusbar__item">Connections: <span id="connection-count">0</span></span>
-    <span class="statusbar__item" style="margin-left: auto;">Bronze → Silver → Gold medallion architecture</span>
+    <span class="statusbar__item">Bronze → Silver → Gold · Delta Lake medallion architecture</span>
+    <span class="statusbar__item" style="margin-left: auto;">spark.sql.adaptive.enabled = true</span>
   </footer>
 
 </div>
