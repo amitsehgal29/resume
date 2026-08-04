@@ -254,6 +254,8 @@ class PipelineEngine {
           el: dot, sx, sy, cpx, cpy, ex, ey,
           speed: 0.002 + Math.random()*0.003,
           progress: i/particleCount,
+          origFill: col.stroke,
+          origFilter: `drop-shadow(0 0 4px ${col.glow})`,
         });
       }
 
@@ -263,12 +265,20 @@ class PipelineEngine {
   }
 
   animateParticles() {
-    if (!this.particles.length) return;
-    const mult = this.isRunning ? 2 : 1;
+    if (!this.particles.length) { requestAnimationFrame(()=>this.animateParticles()); return; }
+    // Toggle particle color: yellow when running, original when idle
     this.particles.forEach(p => {
-      p.progress += p.speed * mult;
+      if (this.isRunning) {
+        p.el.setAttribute('fill', '#FBBF24');
+        p.el.setAttribute('filter', 'drop-shadow(0 0 5px rgba(251,191,36,0.5))');
+      } else if (p.el.getAttribute('fill') === '#FBBF24') {
+        p.el.setAttribute('fill', p.origFill);
+        p.el.setAttribute('filter', p.origFilter);
+      }
+    });
+    this.particles.forEach(p => {
+      p.progress += p.speed;
       if (p.progress>1) p.progress-=1;
-      // Quadratic bezier: B(t) = (1-t)²P0 + 2(1-t)tP1 + t²P2
       const t = p.progress, mt = 1-t;
       const cx = mt*mt*p.sx + 2*mt*t*p.cpx + t*t*p.ex;
       const cy = mt*mt*p.sy + 2*mt*t*p.cpy + t*t*p.ey;
