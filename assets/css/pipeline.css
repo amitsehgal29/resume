@@ -164,7 +164,7 @@ html, body {
 /* ── Connections (SVG) ─────────────────────────────────────────── */
 .pipeline-edge { stroke: var(--color-border-strong); stroke-width: 2; stroke-linecap: round; transition: all var(--duration-normal) var(--ease-smooth); }
 .pipeline-arrow { fill: var(--color-border-strong); transition: fill var(--duration-normal) var(--ease-smooth); }
-.pipeline-particle { fill: var(--color-brand); filter: drop-shadow(0 0 4px var(--color-brand-glow)); }
+.pipeline-particle { /* fill + filter set inline via JS */ }
 .pipeline-connection--active .pipeline-edge { stroke: var(--color-brand); stroke-width: 3; filter: drop-shadow(0 0 6px var(--color-brand-glow)); }
 .pipeline-connection--active .pipeline-arrow { fill: var(--color-brand); }
 

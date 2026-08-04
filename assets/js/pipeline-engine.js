@@ -167,6 +167,7 @@ class PipelineEngine {
   /* ── SVG Connections — Curved Bezier Lines ───────────────────── */
 
   drawArrows() {
+    if (this._animFrame) cancelAnimationFrame(this._animFrame);
     this.svgLayer.innerHTML = '';
     this.particles = [];
     const cr = this.canvas.getBoundingClientRect();
@@ -265,7 +266,8 @@ class PipelineEngine {
   }
 
   animateParticles() {
-    if (!this.particles.length) { requestAnimationFrame(()=>this.animateParticles()); return; }
+    if (this._animFrame) cancelAnimationFrame(this._animFrame);
+    if (!this.particles.length) { this._animFrame = requestAnimationFrame(()=>this.animateParticles()); return; }
     // Toggle particle color: yellow when running, original when idle
     this.particles.forEach(p => {
       if (this.isRunning) {
@@ -287,7 +289,7 @@ class PipelineEngine {
       const fade = t<0.08?t/0.08:t>0.92?(1-t)/0.08:1;
       p.el.setAttribute('opacity', fade);
     });
-    requestAnimationFrame(()=>this.animateParticles());
+    this._animFrame = requestAnimationFrame(()=>this.animateParticles());
   }
 
   /* ── Selection ───────────────────────────────────────────────── */
