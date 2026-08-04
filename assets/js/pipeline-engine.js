@@ -298,7 +298,7 @@ class PipelineEngine {
     if (this.activeNodeId) { const p=this.nodeEls[this.activeNodeId]; if(p)p.classList.remove('pipeline-node--selected'); }
     const d = DETAIL[id]; if (!d) return;
     this.activeNodeId = id;
-    const el = this.nodeEls[id]; if (el) el.classList.add('pipeline-node--selected');
+    const el = this.nodeEls[id]; if (el) { el.classList.add('pipeline-node--selected'); el.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'nearest' }); }
     this.highlightConnections(id);
     this.detailTitle.textContent = d.title;
     if (this.detailSubtitleEl) this.detailSubtitleEl.textContent = d.subtitle||'';
