@@ -35,7 +35,7 @@ class PipelineEngine {
       // ═══════ MAIN FLOW NODES ═══════
       {
         id: 'source', label: 'Raw Profile\nData', type: 'source',
-        container: 'main-flow', icon: '📥', layer: 'source',
+        container: 'pipeline-main-flow', icon: '📥', layer: 'source',
         connectsTo: ['bronze-layer'],
         detail: { title: 'Amit Sehgal', subtitle: 'Senior Data Engineer · Dubai, UAE', sparkMeta: 'Job: ingest_profile_data · Status: Succeeded', content: this.sourceDetail() }
       },
@@ -154,6 +154,7 @@ class PipelineEngine {
   render() {
     this.buildPipeline();
     this.renderNodes();
+    this.injectFlowArrows();
     this.drawAllConnections();
     this.animateParticles();
     this.initSidebar();
@@ -184,6 +185,25 @@ class PipelineEngine {
       container.appendChild(el);
       this.nodeEls[nodeDef.id] = el;
     });
+  }
+
+  /* ── Flow Arrows ─────────────────────────────────────────────── */
+
+  injectFlowArrows() {
+    // Insert arrow spans between main flow nodes: source → bronze → silver → gold → sink
+    const flowOrder = ['source', 'bronze-layer', 'silver-layer', 'gold-layer', 'sink'];
+
+    for (let i = 0; i < flowOrder.length - 1; i++) {
+      const fromEl = this.nodeEls[flowOrder[i]];
+      const toEl = this.nodeEls[flowOrder[i + 1]];
+      if (!fromEl || !toEl) continue;
+
+      const arrow = document.createElement('span');
+      arrow.className = 'flow-arrow';
+      arrow.innerHTML = '→';
+      arrow.setAttribute('aria-hidden', 'true');
+      fromEl.parentNode.insertBefore(arrow, toEl);
+    }
   }
 
   /* ── SVG Connections ─────────────────────────────────────────── */
@@ -318,26 +338,116 @@ class PipelineEngine {
   runPipeline() {
     if (this.isRunning) return;
     this.isRunning = true;
+
     if (this.runBtn) { this.runBtn.textContent = '⏸ Running...'; this.runBtn.classList.add('toolbar-btn--active'); }
     if (this.statusIndicator) { this.statusIndicator.textContent = 'Running'; this.statusIndicator.className = 'status-badge status--running'; }
-    if (this.clusterRuntime) this.clusterRuntime.textContent = 'Cluster: amit-resume-prod ● Running';
+    if (this.clusterRuntime) this.clusterRuntime.textContent = 'Cluster: amit-resume-prod ● Starting';
 
-    const layerOrder = ['source', 'bronze', 'silver', 'gold', 'sink'];
-    layerOrder.forEach((layer, i) => {
-      setTimeout(() => {
-        this.nodes.filter(n => n.layer === layer || n.id === layer).forEach(n => { this.updateNodeStatus(n.id, 'running'); });
-      }, i * 600);
-      setTimeout(() => {
-        this.nodes.filter(n => n.layer === layer || n.id === layer).forEach(n => { this.updateNodeStatus(n.id, 'success'); });
-      }, i * 600 + 400);
-    });
+    // Open detail panel with live Spark output
+    this.detailTitle.textContent = 'Pipeline Run: amit_resume_dag';
+    if (this.detailSubtitleEl) this.detailSubtitleEl.textContent = 'Run ID: run-' + Date.now();
+    if (this.detailSparkMeta) this.detailSparkMeta.textContent = 'Cluster: amit-resume-prod · Runtime: 14.3 LTS · Photon: Enabled';
+    this.detailPanel.classList.add('detail-panel--open');
+
+    const stages = [
+      { name: 'bronze_ingestion_job', rows: 4, time: '0.8s', mem: '2.1 GB' },
+      { name: 'bronze_emirates_nbd', rows: 1, time: '1.1s', mem: '3.4 GB' },
+      { name: 'bronze_epam_cantire', rows: 1, time: '0.9s', mem: '2.8 GB' },
+      { name: 'bronze_abb_iot', rows: 1, time: '1.3s', mem: '4.2 GB' },
+      { name: 'bronze_infosys_pwc', rows: 1, time: '0.7s', mem: '1.9 GB' },
+      { name: 'silver_validation_job', rows: 12, time: '0.6s', mem: '1.5 GB' },
+      { name: 'silver_skills_catalog', rows: 26, time: '0.4s', mem: '0.8 GB' },
+      { name: 'gold_aggregation_job', rows: 6, time: '0.5s', mem: '1.1 GB' },
+      { name: 'gold_kpi_dashboard', rows: 6, time: '0.3s', mem: '0.6 GB' },
+      { name: 'sink_export_contact', rows: 1, time: '0.2s', mem: '0.4 GB' },
+    ];
+
+    let outputHTML = '<div class="nb-cell"><div class="nb-cell__cmd">%sh</div><div class="nb-cell__code">spark-submit --class com.amit.resume.PipelineRunner --master yarn --deploy-mode cluster --num-executors 8 --executor-cores 4 --executor-memory 8G s3://jobs/amit_resume_dag.jar</div></div>';
+    outputHTML += '<div class="nb-cell"><div class="nb-cell__output" id="run-output" style="font-size:0.65rem;line-height:1.7;height:200px;overflow-y:auto;">';
+
+    this.detailContent.innerHTML = outputHTML;
+    const outputEl = document.getElementById('run-output');
+    let stageIdx = 0;
+
+    const appendLog = () => {
+      if (stageIdx >= stages.length) {
+        // All done
+        outputEl.innerHTML += '<span style="color:#34D399">✓ Pipeline completed successfully</span><br>';
+        outputEl.innerHTML += '<span style="color:#A0A0AB">──────────────────────────────</span><br>';
+        outputEl.innerHTML += '<span style="color:#FBBF24">Total DBU: 0.42 · Rows processed: 59 · Duration: 6.8s</span><br>';
+        outputEl.innerHTML += '<span style="color:#34D399">Status: SUCCESS ✓</span>';
+        outputEl.scrollTop = outputEl.scrollHeight;
+
+        // Close detail panel, celebrate, finish
+        setTimeout(() => this.celebrateFinish(), 800);
+        return;
+      }
+
+      const s = stages[stageIdx];
+      const statusEl = this.nodeEls[s.name] || this.nodeEls[stageIdx < 5 ? ['emirates','epam','abb','infosys'][stageIdx-1] || '' : ''];
+
+      // Update node status
+      this.nodes.filter(n => n.id === s.name || (stageIdx === 0 && n.layer === 'bronze') ||
+        (stageIdx === 5 && n.layer === 'silver') || (stageIdx === 7 && n.layer === 'gold')).forEach(n => {
+        this.updateNodeStatus(n.id || n, 'running');
+      });
+
+      // Also update the specific node
+      if (stageIdx === 0) this.nodes.filter(n => n.layer === 'bronze' || n.id === 'bronze-layer').forEach(n => this.updateNodeStatus(n.id, 'running'));
+      if (stageIdx >= 1 && stageIdx <= 4) this.updateNodeStatus(['emirates','epam','abb','infosys'][stageIdx-1], 'running');
+      if (stageIdx === 5) this.nodes.filter(n => n.layer === 'silver' || n.id === 'silver-layer').forEach(n => this.updateNodeStatus(n.id, 'running'));
+      if (stageIdx >= 6 && stageIdx <= 7) this.updateNodeStatus(stageIdx === 6 ? 'skills-node' : stageIdx === 7 ? 'certs-node' : 'edu-node', 'running');
+      if (stageIdx === 7) this.nodes.filter(n => n.layer === 'gold' || n.id === 'gold-layer').forEach(n => this.updateNodeStatus(n.id, 'running'));
+
+      outputEl.innerHTML += `<span style="color:#60A5FA">[Stage ${stageIdx+1}/${stages.length}]</span> ${s.name} — ${s.rows} rows · ${s.time} · ${s.mem} peak<br>`;
+      outputEl.scrollTop = outputEl.scrollHeight;
+
+      // Mark previous stage as success
+      if (stageIdx > 0) {
+        const prevStage = stages[stageIdx-1];
+        // Mark the corresponding node as success
+        setTimeout(() => {
+          if (stageIdx-1 === 0) this.nodes.filter(n => n.layer === 'bronze' || n.id === 'bronze-layer').forEach(n => this.updateNodeStatus(n.id, 'success'));
+          if (stageIdx-1 >= 1 && stageIdx-1 <= 4) this.updateNodeStatus(['emirates','epam','abb','infosys'][stageIdx-2], 'success');
+          if (stageIdx-1 === 5) this.nodes.filter(n => n.layer === 'silver' || n.id === 'silver-layer').forEach(n => this.updateNodeStatus(n.id, 'success'));
+          if (stageIdx-1 === 6) this.updateNodeStatus('skills-node', 'success');
+          if (stageIdx-1 === 7) this.updateNodeStatus('certs-node', 'success');
+        }, 200);
+      }
+
+      stageIdx++;
+      setTimeout(() => appendLog(), 350 + Math.random() * 200);
+    };
+
+    // Start source node
+    this.updateNodeStatus('source', 'running');
+    if (this.clusterRuntime) this.clusterRuntime.textContent = 'Cluster: amit-resume-prod ● Acquiring executors...';
 
     setTimeout(() => {
-      this.isRunning = false;
-      if (this.runBtn) { this.runBtn.textContent = '▶ Run Pipeline'; this.runBtn.classList.remove('toolbar-btn--active'); }
-      if (this.statusIndicator) { this.statusIndicator.textContent = 'Succeeded'; this.statusIndicator.className = 'status-badge status--success'; }
-      if (this.clusterRuntime) this.clusterRuntime.textContent = 'Cluster: amit-resume-prod ● Idle';
-    }, layerOrder.length * 600 + 200);
+      this.updateNodeStatus('source', 'success');
+      if (this.clusterRuntime) this.clusterRuntime.textContent = 'Cluster: amit-resume-prod ● Running (8 executors)';
+      appendLog();
+    }, 300);
+  }
+
+  celebrateFinish() {
+    // Flash all nodes green
+    Object.values(this.nodeEls).forEach(el => el.classList.add('pipeline-node--celebrate'));
+    setTimeout(() => Object.values(this.nodeEls).forEach(el => el.classList.remove('pipeline-node--celebrate')), 1200);
+
+    // Update UI
+    this.isRunning = false;
+    if (this.runBtn) { this.runBtn.textContent = '▶ Run Pipeline'; this.runBtn.classList.remove('toolbar-btn--active'); }
+    if (this.statusIndicator) { this.statusIndicator.textContent = 'Succeeded'; this.statusIndicator.className = 'status-badge status--success'; }
+    if (this.clusterRuntime) this.clusterRuntime.textContent = 'Cluster: amit-resume-prod ● Idle · Last run: ' + new Date().toLocaleTimeString();
+
+    // Show completion in detail panel
+    this.detailTitle.textContent = 'Job Run Complete ✓';
+    if (this.detailSubtitleEl) this.detailSubtitleEl.textContent = 'amit_resume_dag — All stages succeeded';
+    if (this.detailSparkMeta) this.detailSparkMeta.textContent = 'DBU: 0.42 · Rows: 59 · Wall-clock: 6.8s · Spark UI: http://spark.amit-resume-prod:4040';
+
+    // All nodes success
+    this.nodes.forEach(n => this.updateNodeStatus(n.id, 'success'));
   }
 
   updateNodeStatus(nodeId, status) {

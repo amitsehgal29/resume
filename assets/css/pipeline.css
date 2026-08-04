@@ -128,6 +128,12 @@ html, body {
 .pipeline-node__sublabel { font-family: var(--font-mono); font-size: 0.58rem; color: var(--color-text-tertiary); line-height: 1.2; }
 .pipeline-node__status { width: 7px; height: 7px; border-radius: var(--radius-full); position: absolute; top: 5px; right: 5px; transition: all var(--duration-normal) ease; }
 .pipeline-node__status.status--running { background: var(--color-info); animation: status-pulse 0.8s ease-in-out infinite; }
+.pipeline-node--celebrate { animation: celebrate-glow 1.2s ease-out; }
+@keyframes celebrate-glow {
+  0%   { box-shadow: 0 0 0 0 rgba(52,211,153,0.6); border-color: var(--color-success); }
+  30%  { box-shadow: 0 0 32px 8px rgba(52,211,153,0.4); border-color: var(--color-success); }
+  100% { box-shadow: 0 0 0 0 rgba(52,211,153,0); border-color: var(--color-border); }
+}
 .pipeline-node__status.status--success { background: var(--color-success); box-shadow: 0 0 6px rgba(52,211,153,0.5); }
 .pipeline-node__delta { position: absolute; top: -6px; left: -6px; font-size: 0.55rem; width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; background: var(--color-surface); border: 1.5px solid var(--color-node-gold); border-radius: var(--radius-full); color: var(--color-node-gold); }
 
