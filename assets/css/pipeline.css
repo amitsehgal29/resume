@@ -88,7 +88,7 @@ html, body {
 /* ── Main Flow Row ─────────────────────────────────────────────── */
 .pipeline-main-flow {
   display: flex; align-items: center; justify-content: center;
-  gap: var(--space-md);
+  gap: var(--space-lg);
 }
 
 /* ── Pipeline Node (ADF activity card) ─────────────────────────── */
@@ -144,10 +144,10 @@ html, body {
 /* ── Zones (Big Dotted Boxes) ──────────────────────────────────── */
 .pipeline-zone {
   border: 1.5px dashed var(--color-border-strong);
-  border-radius: var(--radius-lg); padding: var(--space-md);
+  border-radius: var(--radius-lg); padding: var(--space-lg);
   background: var(--color-surface-alt);
-  width: 240px; flex-shrink: 0;
-  display: flex; flex-direction: column; gap: var(--space-sm);
+  width: 250px; flex-shrink: 0;
+  display: flex; flex-direction: column; gap: var(--space-md);
 }
 .pipeline-zone--bronze { border-color: rgba(184,115,51,0.35); background: rgba(184,115,51,0.04); }
 .pipeline-zone--silver { border-color: rgba(160,160,171,0.3); background: rgba(160,160,171,0.03); }
@@ -162,7 +162,7 @@ html, body {
 .pipeline-zone--gold .pipeline-zone__label { color: var(--color-node-gold); }
 
 .pipeline-zone__nodes {
-  display: flex; flex-direction: column; gap: var(--space-sm);
+  display: flex; flex-direction: column; gap: var(--space-lg);
 }
 
 /* ── Connections (SVG) ─────────────────────────────────────────── */
